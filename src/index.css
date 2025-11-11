@@ -1,0 +1,158 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 264 56% 18%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 264 56% 18%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 264 56% 18%;
+
+    /* Roku Purple #662d91 */
+    --primary: 280 54% 38%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 280 54% 48%;
+    
+    /* Suns Purple #1d1160 */
+    --secondary: 264 69% 23%;
+    --secondary-foreground: 0 0% 100%;
+    
+    /* Thistle #D8BFD8 */
+    --accent: 300 24% 80%;
+    --accent-foreground: 264 56% 18%;
+
+    --muted: 270 20% 96%;
+    --muted-foreground: 264 15% 45%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --border: 270 15% 90%;
+    --input: 270 15% 90%;
+    --ring: 280 54% 38%;
+
+    --radius: 0.5rem;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(280 54% 38%), hsl(264 69% 23%));
+    --gradient-accent: linear-gradient(135deg, hsl(280 54% 48%), hsl(300 24% 80%));
+    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%), hsl(270 20% 98%));
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(280 54% 38% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(280 54% 38% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(280 54% 38% / 0.15);
+    --shadow-purple: 0 8px 20px -4px hsl(280 54% 38% / 0.3);
+
+    --sidebar-background: 264 69% 23%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 280 54% 38%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 264 60% 28%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 264 60% 20%;
+    --sidebar-ring: 280 54% 48%;
+  }
+
+  .dark {
+    --background: 264 56% 12%;
+    --foreground: 0 0% 98%;
+
+    --card: 264 50% 16%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 264 50% 16%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 280 54% 48%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 280 54% 58%;
+
+    --secondary: 264 69% 28%;
+    --secondary-foreground: 0 0% 100%;
+
+    --accent: 300 24% 70%;
+    --accent-foreground: 264 56% 18%;
+
+    --muted: 264 40% 20%;
+    --muted-foreground: 270 15% 65%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --border: 264 40% 25%;
+    --input: 264 40% 25%;
+    --ring: 280 54% 48%;
+    
+    --gradient-primary: linear-gradient(135deg, hsl(280 54% 48%), hsl(264 69% 28%));
+    --gradient-accent: linear-gradient(135deg, hsl(280 54% 58%), hsl(300 24% 70%));
+    --gradient-subtle: linear-gradient(180deg, hsl(264 56% 12%), hsl(264 50% 16%));
+    
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.3);
+    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.4);
+    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.5);
+    --shadow-purple: 0 8px 20px -4px hsl(280 54% 48% / 0.4);
+
+    --sidebar-background: 264 69% 16%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 280 54% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 264 60% 22%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 264 60% 20%;
+    --sidebar-ring: 280 54% 58%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+}
+
+@layer utilities {
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+  
+  .gradient-accent {
+    background: var(--gradient-accent);
+  }
+  
+  .shadow-purple {
+    box-shadow: var(--shadow-purple);
+  }
+  
+  .transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
