@@ -242,8 +242,8 @@ export default function Allocation() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>{allocation.assignedTo || "N/A"}</TableCell>
-                        <TableCell>{allocation.assignedBy || "N/A"}</TableCell>
+                        <TableCell>{allocation.assignedTo?.name || "N/A"}</TableCell>
+                        <TableCell>{allocation.assignedBy?.name || "N/A"}</TableCell>
                         <TableCell>{allocation.department || "N/A"}</TableCell>
                         <TableCell>
                           {allocation.assignDate ? new Date(allocation.assignDate).toLocaleDateString() :
@@ -386,9 +386,9 @@ export default function Allocation() {
                       </Badge>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span>{transfer.fromUser || transfer.from || "N/A"}</span>
+                      <span>{transfer.fromUser?.name || transfer.from || "N/A"}</span>
                       <ArrowRightLeft className="h-4 w-4" />
-                      <span>{transfer.toUser || transfer.to || "N/A"}</span>
+                      <span>{transfer.toUser?.name || transfer.to || "N/A"}</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-2">
                       {transfer.timestamp ? new Date(transfer.timestamp).toLocaleDateString() : "N/A"}

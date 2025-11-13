@@ -81,10 +81,10 @@ export default function Assets() {
   }, [searchQuery]);
 
   const filteredAssets = assets.filter((asset) => {
-    const matchesSearch =
-      asset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      asset.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (asset.assignedTo && asset.assignedTo.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesSearch =
+        asset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        asset.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (asset.assignedTo?.name && asset.assignedTo.name.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesSearch;
   });
 
@@ -238,7 +238,7 @@ export default function Assets() {
                         <TableCell>{asset.type}</TableCell>
                         <TableCell>
                           <div>
-                            <div>{asset.assignedTo || "Unassigned"}</div>
+                            <div>{asset.assignedTo?.name || "Unassigned"}</div>
                             <div className="text-xs text-muted-foreground">
                               {asset.department || ""}
                             </div>
