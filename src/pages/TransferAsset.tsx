@@ -39,7 +39,12 @@ export default function TransferAsset() {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.get("/assets");
+      let response;
+      if (user.role === "USER") {
+        response = await api.get("/assets");
+      } else {
+        response = await api.get("/assets");
+      }
       setAssets(response.data);
     } catch (error) {
       console.error("Failed to fetch assets:", error);

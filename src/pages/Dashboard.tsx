@@ -31,7 +31,7 @@ export default function Dashboard() {
 
       // Fetch user's assets if not admin/manager
       if (user && user.role === 'USER') {
-        const assetsResponse = await api.get(`/assets?assignedTo=${user.id}`);
+        const assetsResponse = await api.get("/assets");
         setMyAssets(assetsResponse.data);
       }
     } catch (error) {

@@ -20,7 +20,12 @@ export default function Commissioning() {
   useEffect(() => {
     const fetchAssets = async () => {
       try {
-        const res = await api.get("/assets");
+        let res;
+        if (user.role === "USER") {
+          res = await api.get("/assets");
+        } else {
+          res = await api.get("/assets");
+        }
 
         // ✅ pick all assets eligible for commissioning
         const filtered = res.data.filter(

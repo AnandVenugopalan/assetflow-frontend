@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Calendar, Wrench, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
@@ -18,21 +19,32 @@ export default function NewMaintenance() {
   const [myAssets, setMyAssets] = useState([]);
   const [assetId, setAssetId] = useState(location.state?.assetId || "");
   const [type, setType] = useState("");
+  const [priority, setPriority] = useState("");
   const [scheduledDate, setScheduledDate] = useState("");
   const [vendor, setVendor] = useState("");
   const [estimatedCost, setEstimatedCost] = useState("");
+  const [notes, setNotes] = useState("");
 
   const [loading, setLoading] = useState(false);
+  const [loadingAssets, setLoadingAssets] = useState(true);
 
   useEffect(() => {
     const fetchMyAssets = async () => {
       if (user) {
         try {
-          const response = await api.get(`/assets?assignedTo=${user.id}`);
+          setLoadingAssets(true);
+          let response;
+          if (user.role === "USER") {
+            response = await api.get("/assets");
+          } else {
+            response = await api.get("/assets", { params: { assignedTo: user.id } });
+          }
           setMyAssets(response.data);
         } catch (error) {
           console.error("Failed to fetch assets:", error);
           toast.error("Failed to load your assets");
+        } finally {
+          setLoadingAssets(false);
         }
       }
     };
@@ -42,7 +54,7 @@ export default function NewMaintenance() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!assetId || !type || !scheduledDate) {
+    if (!assetId || !type || !priority || !scheduledDate) {
       toast.error("Required fields missing");
       return;
     }
@@ -52,10 +64,12 @@ export default function NewMaintenance() {
 
       const payload = {
         assetId,
-        type,
+        type: type.toUpperCase(),
+        priority: priority.toUpperCase(),
         scheduledDate,
         vendor: vendor || undefined,
         estimatedCost: estimatedCost ? Number(estimatedCost) : undefined,
+        notes: notes || undefined,
       };
 
       await api.post("/maintenance", payload);
@@ -90,38 +104,53 @@ export default function NewMaintenance() {
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
               <label className="block text-sm font-medium mb-1">Select Asset *</label>
-              <Select value={assetId} onValueChange={setAssetId} disabled={!!location.state?.assetId}>
+              <Select value={assetId} onValueChange={setAssetId} disabled={!!location.state?.assetId || myAssets.length === 0 || loadingAssets}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select Asset" />
+                  <SelectValue placeholder={
+                    loadingAssets ? "Loading assets..." :
+                    myAssets.length === 0 ? "No allocated assets available" :
+                    "Select Asset"
+                  } />
                 </SelectTrigger>
                 <SelectContent>
                   {myAssets.map((asset) => (
                     <SelectItem key={asset.id} value={asset.id}>
-                      {asset.name} ({asset.category})
+                      {asset.name}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+              {myAssets.length === 0 && !loadingAssets && (
+                <p className="text-sm text-muted-foreground mt-1">No assets allocated to you</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Type *</label>
+              <Select value={type} onValueChange={setType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select maintenance type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PREVENTIVE">Preventive</SelectItem>
+                  <SelectItem value="BREAKDOWN">Breakdown</SelectItem>
+                  <SelectItem value="SCHEDULED">Scheduled</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Type *</label>
-              <Input
-                placeholder="Preventive / Breakdown / Scheduled"
-                required
-                value={type}
-                onChange={(e) => setType(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Scheduled Date *</label>
-              <Input
-                type="date"
-                required
-                value={scheduledDate}
-                onChange={(e) => setScheduledDate(e.target.value)}
-              />
+              <label className="block text-sm font-medium mb-1">Priority *</label>
+              <Select value={priority} onValueChange={setPriority}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="LOW">Low</SelectItem>
+                  <SelectItem value="MEDIUM">Medium</SelectItem>
+                  <SelectItem value="HIGH">High</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
@@ -142,6 +171,16 @@ export default function NewMaintenance() {
                 placeholder="Enter estimated cost"
                 value={estimatedCost}
                 onChange={(e) => setEstimatedCost(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Notes</label>
+              <Textarea
+                placeholder="Additional notes or description"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={3}
               />
             </div>
 

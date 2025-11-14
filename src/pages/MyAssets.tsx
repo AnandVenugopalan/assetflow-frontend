@@ -18,7 +18,12 @@ export default function MyAssets() {
   const fetchMyAssets = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/assets?assignedTo=${user.id}`);
+      let response;
+      if (user.role === "USER") {
+        response = await api.get("/assets");
+      } else {
+        response = await api.get("/assets", { params: { assignedTo: user.id } });
+      }
       setAssets(response.data);
     } catch (error) {
       console.error("Error fetching my assets:", error);

@@ -15,7 +15,12 @@ export default function Operation() {
   // ✅ Fetch assets that are currently in operation
   const fetchInUseAssets = async () => {
     try {
-      const res = await api.get("/assets");
+      let res;
+      if (user.role === "USER") {
+        res = await api.get("/assets");
+      } else {
+        res = await api.get("/assets");
+      }
       const filtered = res.data.filter((asset: any) => asset.status === "IN_OPERATION");
       setInUseAssets(filtered);
     } catch (err: any) {

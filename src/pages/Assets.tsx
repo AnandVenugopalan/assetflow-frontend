@@ -19,12 +19,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Filter, Download, Plus, Eye, Edit, Trash2, ArrowUpDown, Loader2 } from "lucide-react";
+import {
+  Search,
+  Filter,
+  Download,
+  Plus,
+  Eye,
+  Edit,
+  Trash2,
+  ArrowUpDown,
+  Loader2,
+} from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Assets() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -32,20 +45,32 @@ export default function Assets() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch assets from API
+  // -----------------------------------
+  // FETCH ASSETS (SAFE HOOKS ONLY)
+  // -----------------------------------
   const fetchAssets = async () => {
     try {
+      if (!user) return; // << safe guard but NOT returning JSX
+
       setLoading(true);
       setError(null);
-      const params = new URLSearchParams();
-      if (statusFilter !== "all") params.append("status", statusFilter.toUpperCase());
-      if (typeFilter !== "all") params.append("type", typeFilter.toUpperCase());
-      if (searchQuery) params.append("q", searchQuery);
 
-      const response = await api.get(`/assets?${params.toString()}`);
+      let response;
+
+      if (user.role === "USER") {
+        response = await api.get("/assets");
+      } else {
+        let params: any = {};
+        if (statusFilter !== "all") params.status = statusFilter;
+        if (typeFilter !== "all") params.type = typeFilter;
+        if (searchQuery.trim() !== "") params.q = searchQuery;
+
+        response = await api.get("/assets", { params });
+      }
+
       setAssets(response.data);
     } catch (err) {
-      console.error("Error fetching assets:", err);
+      console.error(err);
       setError("Failed to load assets");
       toast.error("Failed to load assets");
     } finally {
@@ -53,26 +78,12 @@ export default function Assets() {
     }
   };
 
-  // Delete asset
-  const deleteAsset = async (assetId: string, assetName: string) => {
-    if (!confirm(`Are you sure you want to delete ${assetName}?`)) return;
-
-    try {
-      await api.delete(`/assets/${assetId}`);
-      toast.success("Asset deleted successfully");
-      fetchAssets(); // Refresh the list
-    } catch (err) {
-      console.error("Error deleting asset:", err);
-      toast.error("Failed to delete asset");
-    }
-  };
-
-  // Load assets on component mount and when filters change
+  // Load assets when user + filters change
   useEffect(() => {
     fetchAssets();
-  }, [statusFilter, typeFilter]);
+  }, [user, statusFilter, typeFilter]);
 
-  // Debounced search
+  // Search debounce
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchAssets();
@@ -80,12 +91,26 @@ export default function Assets() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  // -----------------------------------
+  // RENDER STARTS HERE (AFTER HOOKS)
+  // -----------------------------------
+
+  // If user not loaded yet → show spinner (SAFE)
+  if (!user) {
+    return (
+      <div className="flex justify-center items-center h-40">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
+  }
+
   const filteredAssets = assets.filter((asset) => {
-      const matchesSearch =
-        asset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        asset.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (asset.assignedTo?.name && asset.assignedTo.name.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesSearch;
+    const q = searchQuery.toLowerCase();
+    return (
+      asset.name?.toLowerCase().includes(q) ||
+      asset.id?.toLowerCase().includes(q) ||
+      asset.assignedTo?.name?.toLowerCase().includes(q)
+    );
   });
 
   const getStatusColor = (status: string) => {
@@ -109,6 +134,7 @@ export default function Assets() {
 
   return (
     <div className="space-y-6">
+      {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Asset Register</h1>
@@ -122,12 +148,14 @@ export default function Assets() {
         </Button>
       </div>
 
+      {/* Filters */}
       <Card>
         <CardHeader>
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <CardTitle>
               All Assets ({loading ? "..." : filteredAssets.length})
             </CardTitle>
+
             <div className="flex flex-col gap-2 sm:flex-row">
               <div className="relative flex-1 sm:w-64">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -138,6 +166,7 @@ export default function Assets() {
                   className="pl-9"
                 />
               </div>
+
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full sm:w-40">
                   <Filter className="mr-2 h-4 w-4" />
@@ -154,6 +183,7 @@ export default function Assets() {
                   <SelectItem value="disposed">Disposed</SelectItem>
                 </SelectContent>
               </Select>
+
               <Select value={typeFilter} onValueChange={setTypeFilter}>
                 <SelectTrigger className="w-full sm:w-40">
                   <Filter className="mr-2 h-4 w-4" />
@@ -170,126 +200,121 @@ export default function Assets() {
                   <SelectItem value="mobile">Mobile</SelectItem>
                 </SelectContent>
               </Select>
-              <Button 
-                variant="outline"
-                onClick={() => {
-                  toast.success("Exporting assets list...");
-                }}
-              >
+
+              <Button variant="outline" onClick={() => toast.success("Exporting assets list...")}>
                 <Download className="mr-2 h-4 w-4" />
                 Export
               </Button>
             </div>
           </div>
         </CardHeader>
+
+        {/* Table */}
         <CardContent>
-          {error && (
-            <div className="text-center py-8 text-destructive">
-              {error}
-            </div>
-          )}
-          <div className="rounded-md border">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
+          {error && <div className="text-center py-8 text-destructive">{error}</div>}
+
+          <div className="rounded-md border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>
+                    <Button variant="ghost" size="sm" className="h-8 px-2">
+                      Asset ID
+                      <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Assigned To</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Purchase Date</TableHead>
+                  <TableHead>Current Value</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+
+              <TableBody>
+                {loading ? (
                   <TableRow>
-                    <TableHead>
-                      <Button variant="ghost" size="sm" className="h-8 px-2">
-                        Asset ID
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
-                      </Button>
-                    </TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Assigned To</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Purchase Date</TableHead>
-                    <TableHead>Current Value</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableCell colSpan={9} className="text-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                      <div className="mt-2 text-muted-foreground">Loading assets...</div>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8">
-                        <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                        <div className="mt-2 text-muted-foreground">Loading assets...</div>
+                ) : filteredAssets.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                      No assets found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredAssets.map((asset) => (
+                    <TableRow key={asset.id} className="hover:bg-muted/50">
+                      <TableCell className="font-medium">{asset.id}</TableCell>
+
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{asset.name}</div>
+                          <div className="text-xs text-muted-foreground">{asset.serialNumber || asset.model}</div>
+                        </div>
+                      </TableCell>
+
+                      <TableCell>{asset.category}</TableCell>
+
+                      <TableCell>{asset.assignedTo?.name || "Unassigned"}</TableCell>
+
+                      <TableCell>{asset.location || "N/A"}</TableCell>
+
+                      <TableCell>
+                        <Badge variant="outline" className={getStatusColor(asset.status)}>
+                          {asset.status?.replace("_", " ").toUpperCase()}
+                        </Badge>
+                      </TableCell>
+
+                      <TableCell>
+                        {asset.purchaseDate ? new Date(asset.purchaseDate).toLocaleDateString() : "N/A"}
+                      </TableCell>
+
+                      <TableCell className="font-medium">
+                        {asset.currentValue ? `₹${asset.currentValue.toLocaleString()}` : "N/A"}
+                      </TableCell>
+
+                      <TableCell>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => navigate(`/assets/${asset.id}`)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => navigate(`/assets/${asset.id}`)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                            onClick={() => deleteAsset(asset.id, asset.name)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
-                  ) : filteredAssets.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                        No assets found
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredAssets.map((asset) => (
-                      <TableRow key={asset.id} className="hover:bg-muted/50">
-                        <TableCell className="font-medium">{asset.id}</TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{asset.name}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {asset.serialNumber || asset.model}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{asset.category}</TableCell>
-                        <TableCell>
-                          <div>
-                            <div>{asset.assignedTo?.name || "Unassigned"}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {asset.department || ""}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{asset.location || "N/A"}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={getStatusColor(asset.status)}>
-                            {asset.status?.replace("_", " ").toUpperCase() || "UNKNOWN"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {asset.purchaseDate ? new Date(asset.purchaseDate).toLocaleDateString() : "N/A"}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {asset.currentValue ? `₹${asset.currentValue.toLocaleString()}` : "N/A"}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex justify-end gap-2">
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8"
-                              onClick={() => navigate(`/assets/${asset.id}`)}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8"
-                              onClick={() => navigate(`/assets/${asset.id}`)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                              onClick={() => deleteAsset(asset.id, asset.name)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </div>
         </CardContent>
       </Card>
