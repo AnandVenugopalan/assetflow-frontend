@@ -7,10 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Package, Mail, Lock, User, Building2 } from "lucide-react";
 import { toast } from "sonner";
-import api from "../lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login, register } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   // ✅ Login state
@@ -33,18 +34,9 @@ export default function Login() {
 
     setIsLoading(true);
     try {
-      const res = await api.post("/auth/login", {
-        email: loginEmail,
-        password: loginPassword,
-      });
-
-      const { user, accessToken } = res.data;
-
-      localStorage.setItem("token", accessToken);
-      localStorage.setItem("user", JSON.stringify(user));
-
+      await login(loginEmail, loginPassword);
       toast.success("Login successful!");
-      navigate("/assets");
+      navigate("/");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Invalid credentials");
     } finally {
@@ -63,19 +55,9 @@ export default function Login() {
 
     setIsLoading(true);
     try {
-      const res = await api.post("/auth/register", {
-        name: signupName,
-        email: signupEmail,
-        password: signupPassword,
-      });
-
-      const { user, accessToken } = res.data;
-
-      localStorage.setItem("token", accessToken);
-      localStorage.setItem("user", JSON.stringify(user));
-
+      await register(signupName, signupEmail, signupPassword);
       toast.success("Account created successfully!");
-      navigate("/assets");
+      navigate("/");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Something went wrong");
     } finally {

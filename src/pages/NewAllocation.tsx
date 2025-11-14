@@ -43,7 +43,7 @@ export default function NewAllocation() {
     (async () => {
       try {
         const [assetsRes, usersRes] = await Promise.all([
-          api.get("/assets"),
+          api.get("/assets?status=COMMISSIONED"),
           api.get("/users"),
         ]);
 

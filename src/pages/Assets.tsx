@@ -200,7 +200,7 @@ export default function Assets() {
                       </Button>
                     </TableHead>
                     <TableHead>Name</TableHead>
-                    <TableHead>Type</TableHead>
+                    <TableHead>Category</TableHead>
                     <TableHead>Assigned To</TableHead>
                     <TableHead>Location</TableHead>
                     <TableHead>Status</TableHead>
@@ -235,7 +235,7 @@ export default function Assets() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>{asset.type}</TableCell>
+                        <TableCell>{asset.category}</TableCell>
                         <TableCell>
                           <div>
                             <div>{asset.assignedTo?.name || "Unassigned"}</div>

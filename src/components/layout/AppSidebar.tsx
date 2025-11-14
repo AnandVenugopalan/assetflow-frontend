@@ -1,5 +1,4 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
 import { LayoutDashboard, Package, ShoppingCart, Users, Wrench, Laptop, Building2, TrendingDown, Trash2, FileText, Bell, Settings, LogOut, PlaySquare, CheckSquare, Search, DollarSign } from "lucide-react";
 import {
   Sidebar,
@@ -15,29 +14,32 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/contexts/AuthContext";
 
 
 // RBAC access matrix
 const ACCESS_MATRIX = {
-  "Dashboard": ["ADMIN", "MANAGER", "FINANCE", "USER"],
-  "Asset Register": ["ADMIN", "MANAGER", "FINANCE", "USER"],
-  "Procurement": ["ADMIN"],
+  "Dashboard": ["ADMIN", "MANAGER", "USER"],
+  "Asset Register": ["ADMIN", "MANAGER", "USER"],
+  "Procurement": ["ADMIN", "MANAGER"],
   "Commissioning": ["ADMIN"],
   "Allocation": ["ADMIN", "MANAGER"],
   "Operation": ["ADMIN", "MANAGER"],
-  "Maintenance": ["ADMIN", "MANAGER", "FINANCE"],
-  "Audit": ["ADMIN", "MANAGER", "FINANCE"],
-  "IT Assets": ["ADMIN", "MANAGER", "FINANCE"],
-  "Properties": ["ADMIN", "MANAGER", "FINANCE"],
-  "Valuation": ["FINANCE"],
-  "Depreciation": ["FINANCE"],
-  "Disposal": ["ADMIN", "FINANCE"],
-  "Requests": ["ADMIN", "MANAGER", "FINANCE", "USER"],
+  "Maintenance": ["ADMIN", "MANAGER", "USER"],
+  "Audit": ["ADMIN", "MANAGER"],
+  "IT Assets": ["ADMIN", "MANAGER"],
+  "Properties": ["ADMIN", "MANAGER"],
+  "Valuation": ["ADMIN"],
+  "Depreciation": ["ADMIN"],
+  "Disposal": ["ADMIN"],
+  "Requests": ["ADMIN", "MANAGER", "USER"],
+  "My Assets": ["USER"],
 };
 
 const navigation = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Asset Register", url: "/assets", icon: Package },
+  { title: "My Assets", url: "/my-assets", icon: Package },
   { title: "Procurement", url: "/procurement", icon: ShoppingCart },
   { title: "Commissioning", url: "/commissioning", icon: CheckSquare },
   { title: "Allocation", url: "/allocation", icon: Users },
@@ -56,27 +58,12 @@ const navigation = [
 
 export function AppSidebar() {
   const navigate = useNavigate();
-  // Get user from localStorage
-  const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem("user");
-    return stored ? JSON.parse(stored) : null;
-  });
-
-  useEffect(() => {
-    // Listen for login changes
-    const handleStorage = () => {
-      const stored = localStorage.getItem("user");
-      setUser(stored ? JSON.parse(stored) : null);
-    };
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
-  }, []);
+  const { user, logout } = useAuth();
 
   const userRole = user?.role || "USER";
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    logout();
     navigate("/login");
   };
 

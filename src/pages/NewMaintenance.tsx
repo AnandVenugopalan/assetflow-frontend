@@ -1,17 +1,22 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, Wrench, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import api from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function NewMaintenance() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
 
-  const [assetName, setAssetName] = useState("");
+  const [myAssets, setMyAssets] = useState([]);
+  const [assetId, setAssetId] = useState(location.state?.assetId || "");
   const [type, setType] = useState("");
   const [scheduledDate, setScheduledDate] = useState("");
   const [vendor, setVendor] = useState("");
@@ -19,10 +24,25 @@ export default function NewMaintenance() {
 
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    const fetchMyAssets = async () => {
+      if (user) {
+        try {
+          const response = await api.get(`/assets?assignedTo=${user.id}`);
+          setMyAssets(response.data);
+        } catch (error) {
+          console.error("Failed to fetch assets:", error);
+          toast.error("Failed to load your assets");
+        }
+      }
+    };
+    fetchMyAssets();
+  }, [user]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!assetName || !type || !scheduledDate) {
+    if (!assetId || !type || !scheduledDate) {
       toast.error("Required fields missing");
       return;
     }
@@ -31,7 +51,7 @@ export default function NewMaintenance() {
       setLoading(true);
 
       const payload = {
-        assetName,
+        assetId,
         type,
         scheduledDate,
         vendor: vendor || undefined,
@@ -69,13 +89,19 @@ export default function NewMaintenance() {
         <CardContent>
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
-              <label className="block text-sm font-medium mb-1">Asset Name *</label>
-              <Input
-                placeholder="Enter asset name"
-                required
-                value={assetName}
-                onChange={(e) => setAssetName(e.target.value)}
-              />
+              <label className="block text-sm font-medium mb-1">Select Asset *</label>
+              <Select value={assetId} onValueChange={setAssetId} disabled={!!location.state?.assetId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Asset" />
+                </SelectTrigger>
+                <SelectContent>
+                  {myAssets.map((asset) => (
+                    <SelectItem key={asset.id} value={asset.id}>
+                      {asset.name} ({asset.category})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>

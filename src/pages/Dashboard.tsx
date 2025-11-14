@@ -1,34 +1,26 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, TrendingUp, Wrench, Archive, DollarSign, Users, AlertTriangle } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
+import { Package, TrendingUp, Wrench, Archive, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { notifications } from "@/lib/mockData";
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip
+} from "recharts";
 
-const depreciationData = [
-  { month: "Jan", value: 285 },
-  { month: "Feb", value: 312 },
-  { month: "Mar", value: 298 },
-  { month: "Apr", value: 335 },
-  { month: "May", value: 321 },
-  { month: "Jun", value: 358 },
-];
-
-const locationData = [
-  { location: "Mumbai", count: 342 },
-  { location: "Delhi", count: 289 },
-  { location: "Bangalore", count: 256 },
-  { location: "Pune", count: 178 },
-  { location: "Chennai", count: 182 },
-];
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [dashboardData, setDashboardData] = useState(null);
+  const [myAssets, setMyAssets] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Fetch dashboard data from API
@@ -36,6 +28,12 @@ export default function Dashboard() {
     try {
       const response = await api.get("/dashboard/stats");
       setDashboardData(response.data);
+
+      // Fetch user's assets if not admin/manager
+      if (user && user.role === 'USER') {
+        const assetsResponse = await api.get(`/assets?assignedTo=${user.id}`);
+        setMyAssets(assetsResponse.data);
+      }
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error);
       toast.error("Failed to load dashboard data");
@@ -45,7 +43,9 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    fetchDashboardData();
+    (async () => {
+      await fetchDashboardData();
+    })();
   }, []);
 
   // Calculate stats from API data
@@ -101,6 +101,20 @@ export default function Dashboard() {
       'Others': "hsl(var(--muted-foreground))",
     };
     return colors[category as keyof typeof colors] || "hsl(var(--muted-foreground))";
+  }
+
+  // Helper function to get color for status
+  function getStatusColor(status: string) {
+    switch (status?.toLowerCase()) {
+      case "allocated":
+        return "bg-success/10 text-success border-success/20";
+      case "maintenance":
+        return "bg-warning/10 text-warning border-warning/20";
+      case "disposal":
+        return "bg-destructive/10 text-destructive border-destructive/20";
+      default:
+        return "bg-muted text-muted-foreground border-border";
+    }
   }
   
   if (loading) {
@@ -182,121 +196,33 @@ export default function Dashboard() {
         ))}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Category Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Asset Category Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={categoryData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {categoryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Depreciation Trend */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Monthly Depreciation Trend</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={depreciationData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="month" className="text-xs" />
-                <YAxis className="text-xs" />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  dot={{ fill: "hsl(var(--primary))", r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Assets by Location */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Assets by Location</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={locationData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="location" className="text-xs" />
-                <YAxis className="text-xs" />
-                <Tooltip />
-                <Bar dataKey="count" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Recent Notifications */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Recent Alerts</CardTitle>
-            <Badge variant="secondary">{notifications.filter(n => !n.read).length} New</Badge>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {notifications.slice(0, 4).map((notification) => (
-              <div
-                key={notification.id}
-                className={`flex gap-3 rounded-lg border p-3 transition-smooth ${
-                  !notification.read ? "border-primary/50 bg-primary/5" : "border-border"
-                }`}
+      {/* Category Distribution */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Asset Category Distribution</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={categoryData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                outerRadius={100}
+                fill="#8884d8"
+                dataKey="value"
               >
-                <div className="flex-shrink-0">
-                  {notification.type === "warning" && (
-                    <AlertTriangle className="h-5 w-5 text-warning" />
-                  )}
-                  {notification.type === "info" && (
-                    <Users className="h-5 w-5 text-primary" />
-                  )}
-                  {notification.type === "success" && (
-                    <Package className="h-5 w-5 text-success" />
-                  )}
-                </div>
-                <div className="flex-1 space-y-1">
-                  <p className="text-sm font-medium">{notification.title}</p>
-                  <p className="text-xs text-muted-foreground">{notification.message}</p>
-                  <p className="text-xs text-muted-foreground">{notification.time}</p>
-                </div>
-              </div>
-            ))}
-            <Button 
-              variant="outline" 
-              className="w-full"
-              onClick={() => navigate("/notifications")}
-            >
-              View All Notifications
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+                {categoryData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
 
       {/* Quick Actions */}
       <Card className="gradient-accent">
@@ -330,6 +256,37 @@ export default function Dashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* My Assets Section for Users */}
+      {user?.role === 'USER' && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>My Assets</CardTitle>
+            <Button variant="outline" onClick={() => navigate("/my-assets")}>
+              View All
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {myAssets.length === 0 ? (
+              <p className="text-muted-foreground">No assets allocated to you</p>
+            ) : (
+              <div className="space-y-2">
+                {myAssets.slice(0, 3).map((asset) => (
+                  <div key={asset.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium">{asset.name}</p>
+                      <p className="text-sm text-muted-foreground">{asset.category}</p>
+                    </div>
+                    <Badge variant="outline" className={getStatusColor(asset.status)}>
+                      {asset.status?.replace("_", " ").toUpperCase()}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

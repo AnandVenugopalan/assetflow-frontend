@@ -10,13 +10,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, ShoppingCart, Clock, CheckCircle, TrendingUp, Loader2 } from "lucide-react";
+import { Plus, ShoppingCart, Clock, CheckCircle, TrendingUp, Loader2, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import api from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Procurement() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [procurementRequests, setProcurementRequests] = useState([]);
   const [vendors, setVendors] = useState([]);
   const [workflowStats, setWorkflowStats] = useState(null);
@@ -61,6 +63,34 @@ export default function Procurement() {
     } catch (err) {
       console.error("Error approving request:", err);
       toast.error("Failed to approve request");
+    }
+  };
+
+  // Handle approve
+  const handleApprove = async (id: string) => {
+    try {
+      await api.patch(`/procurement/requests/${id}`, {
+        status: "APPROVED"
+      });
+      toast.success("Purchase request approved successfully!");
+      fetchProcurementData();
+    } catch (err) {
+      console.error("Error approving request:", err);
+      toast.error("Failed to approve request");
+    }
+  };
+
+  // Handle reject
+  const handleReject = async (id: string) => {
+    try {
+      await api.patch(`/procurement/requests/${id}`, {
+        status: "REJECTED"
+      });
+      toast.success("Purchase request rejected successfully!");
+      fetchProcurementData();
+    } catch (err) {
+      console.error("Error rejecting request:", err);
+      toast.error("Failed to reject request");
     }
   };
 
@@ -237,21 +267,31 @@ export default function Procurement() {
                         <TableCell>{request.vendor || "Not assigned"}</TableCell>
                         <TableCell>
                           <div className="flex justify-end gap-2">
+                            {user?.role === "MANAGER" && (
+                              <>
+                                <Button 
+                                  variant="success" 
+                                  size="sm"
+                                  onClick={() => handleApprove(request.id)}
+                                >
+                                  Approve
+                                </Button>
+                                <Button 
+                                  variant="destructive" 
+                                  size="sm"
+                                  onClick={() => handleReject(request.id)}
+                                >
+                                  Reject
+                                </Button>
+                              </>
+                            )}
                             <Button 
                               variant="outline" 
                               size="sm"
-                              onClick={() => navigate(`/procurement/${request.id}`)}
+                              onClick={() => navigate(`/procurement/requests/${request.id}`)}
                             >
-                              View
+                              View Request
                             </Button>
-                            {(request.status === "PENDING_APPROVAL" || request.status === "Pending Approval") && (
-                              <Button 
-                                size="sm"
-                                onClick={() => approveRequest(request.id)}
-                              >
-                                Approve
-                              </Button>
-                            )}
                           </div>
                         </TableCell>
                       </TableRow>
