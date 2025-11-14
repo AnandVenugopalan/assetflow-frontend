@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, Wrench, ArrowLeft } from "lucide-react";
+import { ArrowLeft, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import api from "@/lib/api";
@@ -30,24 +30,27 @@ export default function NewMaintenance() {
 
   useEffect(() => {
     const fetchMyAssets = async () => {
-      if (user) {
-        try {
-          setLoadingAssets(true);
-          let response;
-          if (user.role === "USER") {
-            response = await api.get("/assets");
-          } else {
-            response = await api.get("/assets", { params: { assignedTo: user.id } });
-          }
-          setMyAssets(response.data);
-        } catch (error) {
-          console.error("Failed to fetch assets:", error);
-          toast.error("Failed to load your assets");
-        } finally {
-          setLoadingAssets(false);
+      if (!user) return;
+
+      try {
+        setLoadingAssets(true);
+        let response;
+
+        if (user.role === "USER") {
+          response = await api.get("/assets");
+        } else {
+          response = await api.get("/assets", { params: { assignedTo: user.id } });
         }
+
+        setMyAssets(response.data);
+      } catch (error) {
+        console.error("Failed to fetch assets:", error);
+        toast.error("Failed to load your assets");
+      } finally {
+        setLoadingAssets(false);
       }
     };
+
     fetchMyAssets();
   }, [user]);
 
@@ -66,7 +69,7 @@ export default function NewMaintenance() {
         assetId,
         type: type.toUpperCase(),
         priority: priority.toUpperCase(),
-        scheduledDate,
+        scheduledDate: new Date(scheduledDate).toISOString(), // IMPORTANT FIX
         vendor: vendor || undefined,
         estimatedCost: estimatedCost ? Number(estimatedCost) : undefined,
         notes: notes || undefined,
@@ -74,9 +77,10 @@ export default function NewMaintenance() {
 
       await api.post("/maintenance", payload);
 
-      toast.success("New maintenance record created!");
+      toast.success("New maintenance request created!");
       navigate("/maintenance");
     } catch (error: any) {
+      console.error(error);
       toast.error(error.response?.data?.message || "Failed to create record");
     } finally {
       setLoading(false);
@@ -102,16 +106,26 @@ export default function NewMaintenance() {
 
         <CardContent>
           <form className="space-y-4" onSubmit={handleSubmit}>
+            {/* Select Asset */}
             <div>
               <label className="block text-sm font-medium mb-1">Select Asset *</label>
-              <Select value={assetId} onValueChange={setAssetId} disabled={!!location.state?.assetId || myAssets.length === 0 || loadingAssets}>
+              <Select
+                value={assetId}
+                onValueChange={setAssetId}
+                disabled={!!location.state?.assetId || loadingAssets || myAssets.length === 0}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder={
-                    loadingAssets ? "Loading assets..." :
-                    myAssets.length === 0 ? "No allocated assets available" :
-                    "Select Asset"
-                  } />
+                  <SelectValue
+                    placeholder={
+                      loadingAssets
+                        ? "Loading assets..."
+                        : myAssets.length === 0
+                        ? "No allocated assets available"
+                        : "Select Asset"
+                    }
+                  />
                 </SelectTrigger>
+
                 <SelectContent>
                   {myAssets.map((asset) => (
                     <SelectItem key={asset.id} value={asset.id}>
@@ -120,11 +134,9 @@ export default function NewMaintenance() {
                   ))}
                 </SelectContent>
               </Select>
-              {myAssets.length === 0 && !loadingAssets && (
-                <p className="text-sm text-muted-foreground mt-1">No assets allocated to you</p>
-              )}
             </div>
 
+            {/* Type */}
             <div>
               <label className="block text-sm font-medium mb-1">Type *</label>
               <Select value={type} onValueChange={setType}>
@@ -139,6 +151,7 @@ export default function NewMaintenance() {
               </Select>
             </div>
 
+            {/* Priority */}
             <div>
               <label className="block text-sm font-medium mb-1">Priority *</label>
               <Select value={priority} onValueChange={setPriority}>
@@ -153,6 +166,17 @@ export default function NewMaintenance() {
               </Select>
             </div>
 
+            {/* Scheduled Date (REQUIRED) */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Scheduled Date *</label>
+              <Input
+                type="date"
+                value={scheduledDate}
+                onChange={(e) => setScheduledDate(e.target.value)}
+              />
+            </div>
+
+            {/* Vendor */}
             <div>
               <label className="block text-sm font-medium mb-1">Vendor</label>
               <Input
@@ -162,6 +186,7 @@ export default function NewMaintenance() {
               />
             </div>
 
+            {/* Estimated Cost */}
             <div>
               <label className="block text-sm font-medium mb-1">Estimated Cost</label>
               <Input
@@ -174,6 +199,7 @@ export default function NewMaintenance() {
               />
             </div>
 
+            {/* Notes */}
             <div>
               <label className="block text-sm font-medium mb-1">Notes</label>
               <Textarea
@@ -184,12 +210,9 @@ export default function NewMaintenance() {
               />
             </div>
 
+            {/* Buttons */}
             <div className="flex justify-end gap-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate("/maintenance")}
-              >
+              <Button type="button" variant="outline" onClick={() => navigate("/maintenance")}>
                 Cancel
               </Button>
 
