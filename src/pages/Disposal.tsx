@@ -15,45 +15,6 @@ import {
 import { Trash2, Plus, CheckCircle, Clock, XCircle, Loader2 } from "lucide-react";
 import api from "@/lib/api";
 
-const disposalRequests = [
-  {
-    id: "DSP-001",
-    assetId: "AST-045",
-    assetName: "HP ProBook 450",
-    reason: "End of life",
-    requestedBy: "Meera Iyer",
-    requestDate: "2024-01-08",
-    status: "Pending Approval",
-    estimatedValue: "₹8,000",
-    salvageValue: "₹5,000",
-    disposalMethod: "Auction",
-  },
-  {
-    id: "DSP-002",
-    assetId: "AST-078",
-    assetName: "Office Chair",
-    reason: "Damaged",
-    requestedBy: "Admin Team",
-    requestDate: "2024-01-05",
-    status: "Approved",
-    estimatedValue: "₹3,500",
-    salvageValue: "₹500",
-    disposalMethod: "Scrap",
-  },
-  {
-    id: "DSP-003",
-    assetId: "AST-023",
-    assetName: "Maruti Swift",
-    reason: "High maintenance cost",
-    requestedBy: "Vikram Singh",
-    requestDate: "2023-12-28",
-    status: "Completed",
-    estimatedValue: "₹2,80,000",
-    salvageValue: "₹2,65,000",
-    disposalMethod: "Sale",
-  },
-];
-
 export default function Disposal() {
   const navigate = useNavigate();
   const [disposals, setDisposals] = useState([]);
@@ -90,73 +51,66 @@ export default function Disposal() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchDisposalData = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      setError(null);
 
-      // Fetch disposal requests
-      const [disposalsResponse, statsResponse] = await Promise.all([
-        api.get("/disposals"),
-        api.get("/dashboard/stats")
-      ]);
+      const disposalsRes = await api.get("/disposals");
+      setDisposals(disposalsRes.data);
 
-      setDisposals(disposalsResponse.data);
+      const statsRes = await api.get("/disposals/stats");
+      const { totalDisposals, disposalsByStatus } = statsRes.data;
 
-      // Update stats from dashboard stats
-      const { totalDisposals, disposalsByStatus } = statsResponse.data;
-      const statusCounts = disposalsByStatus.reduce((acc, item) => {
-        acc[item.status] = item._count;
-        return acc;
-      }, {});
+      const lookup = (status) =>
+        disposalsByStatus.find(x => x.status === status)?._count || 0;
 
       setStats([
         {
           title: "Total Disposals",
-          value: totalDisposals.toString(),
+          value: totalDisposals,
           icon: Trash2,
           color: "text-primary",
           bgColor: "bg-primary/10",
         },
         {
           title: "Pending",
-          value: (statusCounts.REQUESTED || 0).toString(),
+          value: lookup("REQUESTED"),
           icon: Clock,
           color: "text-warning",
           bgColor: "bg-warning/10",
         },
         {
           title: "Completed",
-          value: (statusCounts.DISPOSED || 0).toString(),
+          value: lookup("DISPOSED"),
           icon: CheckCircle,
           color: "text-success",
           bgColor: "bg-success/10",
         },
         {
           title: "Rejected",
-          value: (statusCounts.REJECTED || 0).toString(),
+          value: lookup("REJECTED"),
           icon: XCircle,
           color: "text-destructive",
           bgColor: "bg-destructive/10",
         },
       ]);
-    } catch (error) {
-      console.error("Failed to fetch disposal data:", error);
-      setError("Failed to load disposal data. Please try again.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load disposal data");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchDisposalData();
+    fetchData();
   }, []);
 
   const handleApproveDisposal = async (id) => {
     try {
       await api.patch(`/disposals/${id}`, { status: "APPROVED" });
       toast.success("Disposal request approved successfully!");
-      fetchDisposalData(); // Refresh data
+      fetchData(); // Refresh data
     } catch (error) {
       console.error("Failed to approve disposal:", error);
       toast.error("Failed to approve disposal request");
@@ -167,7 +121,7 @@ export default function Disposal() {
     try {
       await api.patch(`/disposals/${id}`, { status: "REJECTED" });
       toast.success("Disposal request rejected!");
-      fetchDisposalData(); // Refresh data
+      fetchData(); // Refresh data
     } catch (error) {
       console.error("Failed to reject disposal:", error);
       toast.error("Failed to reject disposal request");
@@ -287,7 +241,7 @@ export default function Disposal() {
                           </div>
                         </TableCell>
                         <TableCell>{request.reason || "—"}</TableCell>
-                        <TableCell>{request.requestedBy || "N/A"}</TableCell>
+                        <TableCell>{request.requestedBy?.name || "N/A"}</TableCell>
                         <TableCell>
                           {request.createdAt ? new Date(request.createdAt).toLocaleDateString() : "N/A"}
                         </TableCell>
