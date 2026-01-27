@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -14,20 +13,55 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
-import { assets } from "@/lib/mockData";
 import api from "../lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function NewDisposalRequest() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Form state variables
   const [selectedAsset, setSelectedAsset] = useState("");
   const [reason, setReason] = useState("");
   const [description, setDescription] = useState("");
 
+  const [assets, setAssets] = useState([]);
+  const [loadingAssets, setLoadingAssets] = useState(true);
+
+  useEffect(() => {
+    async function loadAssets() {
+      try {
+        setLoadingAssets(true);
+
+        const response = await api.get("/assets");
+
+        // OPTIONAL: Filter assets that are valid for disposal
+        const filtered = response.data.filter(a =>
+          ["COMMISSIONED", "MAINTENANCE", "ALLOCATED"].includes(a.status)
+        );
+
+        setAssets(filtered);
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to load assets");
+      } finally {
+        // ❗ FIX: you forgot this earlier
+        setLoadingAssets(false);
+      }
+    }
+
+    loadAssets();
+  }, [user]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!selectedAsset || !reason || !description) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -35,10 +69,10 @@ export default function NewDisposalRequest() {
         assetId: selectedAsset,
         reason,
         description,
-        status: "PENDING"
+        status: "REQUESTED",
       };
 
-      const res = await api.post("/disposals", payload);
+      await api.post("/disposals", payload);
 
       toast.success("Disposal request submitted!");
       navigate("/disposal");
@@ -69,21 +103,23 @@ export default function NewDisposalRequest() {
             <CardTitle>Asset Selection</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="asset">Select Asset *</Label>
-              <Select value={selectedAsset} onValueChange={setSelectedAsset} required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose asset" />
-                </SelectTrigger>
-                <SelectContent>
-                  {assets.map((asset) => (
-                    <SelectItem key={asset.id} value={asset.id}>
-                      {asset.name} ({asset.id})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <Label>Select Asset *</Label>
+            <Select
+              value={selectedAsset}
+              onValueChange={setSelectedAsset}
+              disabled={loadingAssets}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={loadingAssets ? "Loading assets..." : "Choose asset"} />
+              </SelectTrigger>
+              <SelectContent>
+                {assets.map((asset) => (
+                  <SelectItem key={asset.id} value={asset.id}>
+                    {asset.name} — {asset.id}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </CardContent>
         </Card>
 
@@ -92,26 +128,26 @@ export default function NewDisposalRequest() {
             <CardTitle>Disposal Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="reason">Reason *</Label>
-              <Select value={reason} onValueChange={setReason} required>
+            <div>
+              <Label>Reason *</Label>
+              <Select value={reason} onValueChange={setReason}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select reason" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="eol">End of Life</SelectItem>
-                  <SelectItem value="damaged">Damaged</SelectItem>
-                  <SelectItem value="obsolete">Obsolete</SelectItem>
+                  <SelectItem value="EOL">End of Life</SelectItem>
+                  <SelectItem value="DAMAGED">Damaged</SelectItem>
+                  <SelectItem value="OBSOLETE">Obsolete</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Description *</Label>
-              <Textarea 
-                id="description" 
+
+            <div>
+              <Label>Description *</Label>
+              <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                required 
+                required
               />
             </div>
           </CardContent>
@@ -122,6 +158,7 @@ export default function NewDisposalRequest() {
             <Save className="mr-2 h-4 w-4" />
             {isSubmitting ? "Submitting..." : "Submit"}
           </Button>
+
           <Button type="button" variant="outline" onClick={() => navigate("/disposal")}>
             Cancel
           </Button>

@@ -47,7 +47,10 @@ const App = () => (
           <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <Routes>
               <Route path="/login" element={<Login />} />
+              {/* <Route path="/" element={<Login />} /> */}
               <Route path="/" element={<AppLayout><Dashboard /></AppLayout>} />
+              
+
               <Route path="/assets" element={<AppLayout><Assets /></AppLayout>} />
               <Route path="/assets/add" element={<AppLayout><AddAsset /></AppLayout>} />
               <Route path="/assets/:id" element={<AppLayout><AssetDetail /></AppLayout>} />
