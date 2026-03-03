@@ -6,13 +6,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Save, Upload } from "lucide-react";
+import { ArrowLeft, Save, Upload, Download, CheckCircle, Eye, QrCode } from "lucide-react";
+import { QRCodeCanvas } from "qrcode.react";
 import { toast } from "sonner";
 import { cities } from "@/lib/mockData";
 import api from "../lib/api";
@@ -20,6 +28,8 @@ import api from "../lib/api";
 export default function AddProperty() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showQRDialog, setShowQRDialog] = useState(false);
+  const [createdAsset, setCreatedAsset] = useState<any>(null);
   const [ownership, setOwnership] = useState<"owned" | "leased">("owned");
 
   // Property details state
@@ -85,9 +95,12 @@ export default function AddProperty() {
       if (insurance) payload.insurancePolicyNumber = insurance;
 
       const res = await api.post("/properties", payload);
+      const newAsset = res.data;
+      
+      setCreatedAsset(newAsset);
+      setShowQRDialog(true);
 
       toast.success("Property added successfully!");
-      navigate("/properties");
 
     } catch (err: any) {
       console.error(err);
@@ -95,6 +108,32 @@ export default function AddProperty() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Download QR Code
+  const downloadQRCode = () => {
+    const canvas = document.getElementById("new-asset-qr-code") as HTMLCanvasElement;
+    if (canvas) {
+      const url = canvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `property-${createdAsset?.id || 'new'}-qr-code.png`;
+      link.click();
+      toast.success("QR Code downloaded successfully!");
+    }
+  };
+
+  // View Asset Details
+  const viewAssetDetails = () => {
+    if (createdAsset?.id) {
+      navigate(`/assets/${createdAsset.id}`);
+    }
+  };
+
+  // Close and go back to properties list
+  const closeAndNavigate = () => {
+    setShowQRDialog(false);
+    navigate("/properties");
   };
 
   return (
@@ -451,6 +490,89 @@ export default function AddProperty() {
           </div>
         </div>
       </form>
+
+      {/* QR Code Success Dialog */}
+      <Dialog open={showQRDialog} onOpenChange={setShowQRDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-500" />
+              Property Created Successfully!
+            </DialogTitle>
+            <DialogDescription>
+              Your property has been registered. Here's the QR code for quick access.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Property Info */}
+            <div className="rounded-lg bg-muted p-4 space-y-2">
+              <p className="font-semibold text-lg">{createdAsset?.name}</p>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>ID: {createdAsset?.id}</span>
+                {createdAsset?.category && (
+                  <>
+                    <span>•</span>
+                    <span>{createdAsset.category}</span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* QR Code */}
+            <div className="flex justify-center p-6 bg-white rounded-lg border">
+              <QRCodeCanvas
+                id="new-asset-qr-code"
+                value={createdAsset?.id || ""}
+                size={200}
+                level="H"
+                includeMargin={true}
+              />
+            </div>
+
+            {/* Instructions */}
+            <div className="text-xs text-muted-foreground space-y-1 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+              <p className="font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                <QrCode className="h-3 w-3" />
+                Next Steps:
+              </p>
+              <ul className="list-disc list-inside space-y-1 ml-2 text-blue-800 dark:text-blue-200">
+                <li>Download and print this QR code</li>
+                <li>Attach it to the property entrance/office</li>
+                <li>Use QR Scanner to access property details instantly</li>
+              </ul>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col gap-2">
+              <Button
+                onClick={downloadQRCode}
+                variant="outline"
+                className="w-full"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download QR Code
+              </Button>
+              
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  onClick={viewAssetDetails}
+                  variant="outline"
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  View Details
+                </Button>
+                <Button
+                  onClick={closeAndNavigate}
+                  className="gradient-primary"
+                >
+                  Done
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -33,6 +33,7 @@ import TransferAsset from "./pages/TransferAsset";
 import AddProcurement from "./pages/AddProcurement";
 import ViewProcurementRequest from "./pages/ViewProcurementRequest";
 import MyAssets from "./pages/MyAssets";
+import ScanQR from "./pages/ScanQR";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -54,6 +55,7 @@ const App = () => (
               <Route path="/assets" element={<AppLayout><Assets /></AppLayout>} />
               <Route path="/assets/add" element={<AppLayout><AddAsset /></AppLayout>} />
               <Route path="/assets/:id" element={<AppLayout><AssetDetail /></AppLayout>} />
+              <Route path="/scan-qr" element={<AppLayout><ScanQR /></AppLayout>} />
               <Route path="/procurement" element={<AppLayout><Procurement /></AppLayout>} />
               <Route path="/procurement/add" element={<AppLayout><AddProcurement /></AppLayout>} />
               <Route path="/procurement/requests/:id" element={<AppLayout><ViewProcurementRequest /></AppLayout>} />

@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Package, ShoppingCart, Users, Wrench, Laptop, Building2, TrendingDown, Trash2, FileText, Bell, Settings, LogOut, PlaySquare, CheckSquare, Search, DollarSign } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Users, Wrench, Laptop, Building2, TrendingDown, Trash2, FileText, Bell, Settings, LogOut, PlaySquare, CheckSquare, Search, DollarSign, QrCode } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -21,6 +21,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const ACCESS_MATRIX = {
   "Dashboard": ["ADMIN", "MANAGER", "USER"],
   "Asset Register": ["ADMIN", "MANAGER", "USER"],
+  "Scan QR Code": ["ADMIN", "MANAGER", "USER"],
   "Procurement": ["ADMIN", "MANAGER"],
   // "Commissioning": ["ADMIN"],
   "Allocation": ["ADMIN", "MANAGER"],
@@ -39,6 +40,7 @@ const ACCESS_MATRIX = {
 const navigation = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Asset Register", url: "/assets", icon: Package },
+  { title: "Scan QR Code", url: "/scan-qr", icon: QrCode },
   { title: "My Assets", url: "/my-assets", icon: Package },
   { title: "Procurement", url: "/procurement", icon: ShoppingCart },
   // { title: "Commissioning", url: "/commissioning", icon: CheckSquare },
