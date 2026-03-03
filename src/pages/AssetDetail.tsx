@@ -6,6 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   ArrowLeft,
   Edit,
   Trash2,
@@ -20,6 +27,7 @@ import {
   Save,
   X,
 } from "lucide-react";
+import { QRCodeCanvas } from "qrcode.react";
 import api from "../lib/api";
 import { toast } from "sonner";
 
@@ -31,6 +39,7 @@ export default function AssetDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [lifecycleHistory, setLifecycleHistory] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
+  const [showQRDialog, setShowQRDialog] = useState(false);
   const [editForm, setEditForm] = useState({
     name: "",
     category: "",
@@ -171,6 +180,19 @@ export default function AssetDetail() {
     setIsEditing(!isEditing);
   };
 
+  // ✅ Download QR Code
+  const downloadQRCode = () => {
+    const canvas = document.getElementById("asset-qr-code") as HTMLCanvasElement;
+    if (canvas) {
+      const url = canvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `asset-${asset.id}-qr-code.png`;
+      link.click();
+      toast.success("QR Code downloaded successfully!");
+    }
+  };
+
   if (isLoading) return <p>Loading...</p>;
   if (!asset) return <p>Asset not found</p>;
 
@@ -203,7 +225,7 @@ export default function AssetDetail() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => setShowQRDialog(true)}>
             <QrCode className="mr-2 h-4 w-4" />
             View QR
           </Button>
@@ -457,6 +479,68 @@ export default function AssetDetail() {
         {/* Right Column unchanged */}
         {/* QR Code, quick actions, depreciation */}
       </div>
+
+      {/* QR Code Dialog */}
+      <Dialog open={showQRDialog} onOpenChange={setShowQRDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Asset QR Code</DialogTitle>
+            <DialogDescription>
+              Scan this QR code to quickly access asset details
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Asset Info */}
+            <div className="rounded-lg bg-muted p-4 space-y-2">
+              <p className="font-semibold text-lg">{asset?.name}</p>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>ID: {asset?.id}</span>
+                <span>•</span>
+                <span>SN: {asset?.serialNumber || "N/A"}</span>
+              </div>
+            </div>
+
+            {/* QR Code */}
+            <div className="flex justify-center p-6 bg-white rounded-lg border">
+              <QRCodeCanvas
+                id="asset-qr-code"
+                value={asset?.id || ""}
+                size={256}
+                level="H"
+                includeMargin={true}
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-2">
+              <Button
+                onClick={downloadQRCode}
+                className="flex-1"
+                variant="outline"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download QR Code
+              </Button>
+              <Button
+                onClick={() => setShowQRDialog(false)}
+                className="flex-1"
+              >
+                Close
+              </Button>
+            </div>
+
+            {/* Instructions */}
+            <div className="text-xs text-muted-foreground space-y-1 pt-2 border-t">
+              <p className="font-medium">How to use:</p>
+              <ul className="list-disc list-inside space-y-1 ml-2">
+                <li>Download and print this QR code</li>
+                <li>Attach it to the physical asset</li>
+                <li>Use the QR Scanner to quickly access asset details</li>
+              </ul>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
