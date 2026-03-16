@@ -35,6 +35,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       MAINTENANCE_REQUEST: "/maintenance",
       MAINTENANCE: "/maintenance",
       ALLOCATION_REQUEST: "/allocation",
+      ASSET_ALLOCATED: "/my-assets",
       DISPOSAL_REQUEST: "/disposal",
       ASSET_REQUEST: "/requests",
       PROPERTY_REQUEST: "/properties",
