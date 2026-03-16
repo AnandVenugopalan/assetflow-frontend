@@ -23,6 +23,15 @@ export default function Maintenance() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
 
+  const isCompletedStatus = (status: string) =>
+    String(status ?? "").trim().toUpperCase() === "COMPLETED";
+
+  const isInProgressStatus = (status: string) =>
+    String(status ?? "").trim().toUpperCase() === "IN PROGRESS";
+
+  const isScheduledStatus = (status: string) =>
+    String(status ?? "").trim().toUpperCase() === "SCHEDULED";
+
   // ✅ Fetch maintenance records
   const fetchMaintenance = async () => {
     try {
@@ -43,7 +52,12 @@ export default function Maintenance() {
   const handleUpdateStatus = async (id: string, newStatus: string) => {
     try {
       await api.patch(`/maintenance/${id}`, { status: newStatus });
-      toast.success(`Maintenance record updated to ${newStatus}`);
+      toast.success(newStatus === "Completed" ? "Maintenance record approved" : `Maintenance record updated to ${newStatus}`);
+      if (newStatus === "Completed") {
+        window.location.reload();
+        return;
+      }
+
       fetchMaintenance();
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to update maintenance record");
@@ -51,12 +65,10 @@ export default function Maintenance() {
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Completed": return "bg-green-100 text-green-700 border-green-300";
-      case "In Progress": return "bg-yellow-100 text-yellow-700 border-yellow-300";
-      case "Scheduled": return "bg-blue-100 text-blue-700 border-blue-300";
-      default: return "bg-gray-100 text-gray-700 border-gray-300";
-    }
+    if (isCompletedStatus(status)) return "bg-green-100 text-green-700 border-green-300";
+    if (isInProgressStatus(status)) return "bg-yellow-100 text-yellow-700 border-yellow-300";
+    if (isScheduledStatus(status)) return "bg-blue-100 text-blue-700 border-blue-300";
+    return "bg-gray-100 text-gray-700 border-gray-300";
   };
 
   const getPriorityColor = (priority: string) => {
@@ -84,14 +96,14 @@ export default function Maintenance() {
     },
     {
       title: "In Progress",
-      value: records.filter((r) => r.status === "In Progress").length.toString(),
+      value: records.filter((r) => isInProgressStatus(r.status)).length.toString(),
       icon: Clock,
       color: "text-warning",
       bgColor: "bg-warning/10",
     },
     {
       title: "Completed",
-      value: records.filter((r) => r.status === "Completed").length.toString(),
+      value: records.filter((r) => isCompletedStatus(r.status)).length.toString(),
       icon: CheckCircle,
       color: "text-success",
       bgColor: "bg-success/10",
@@ -99,7 +111,7 @@ export default function Maintenance() {
     {
       title: "Overdue",
       value: records.filter((r) => {
-        if (r.status === "Completed") return false;
+        if (isCompletedStatus(r.status)) return false;
         const dueDate = r.dueDate || r.scheduledDate;
         if (!dueDate) return false;
         return new Date(dueDate) < new Date();
@@ -240,21 +252,19 @@ export default function Maintenance() {
                                 View
                               </Button>
 
-                              {record.status !== "Completed" && (
-                                <Button size="sm" onClick={() => handleUpdateStatus(record.id, "Completed")}>
-                                  Complete
-                                </Button>
-                              )}
+                              <Button
+                                size="sm"
+                                disabled={isCompletedStatus(record.status)}
+                                onClick={() => handleUpdateStatus(record.id, "Completed")}
+                                className={
+                                  isCompletedStatus(record.status)
+                                    ? "bg-green-600 text-white hover:bg-green-600 disabled:opacity-100 disabled:text-white"
+                                    : ""
+                                }
+                              >
+                                {isCompletedStatus(record.status) ? "Approved" : "Approve"}
+                              </Button>
 
-                              {record.status === "Scheduled" && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleUpdateStatus(record.id, "In Progress")}
-                                >
-                                  Start
-                                </Button>
-                              )}
                             </div>
                           </TableCell>
                         </TableRow>
