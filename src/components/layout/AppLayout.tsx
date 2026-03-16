@@ -33,6 +33,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       PROCUREMENT_APPROVED: "/procurement",
       PROCUREMENT_REJECTED: "/procurement",
       MAINTENANCE_REQUEST: "/maintenance",
+      MAINTENANCE_APPROVED: "/maintenance",
       MAINTENANCE: "/maintenance",
       ALLOCATION_REQUEST: "/allocation",
       ASSET_ALLOCATED: "/my-assets",
