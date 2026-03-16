@@ -30,6 +30,8 @@ export function AppLayout({ children }: AppLayoutProps) {
   const notificationRouteMap = useMemo(
     () => ({
       PROCUREMENT_REQUEST: "/procurement",
+      PROCUREMENT_APPROVED: "/procurement",
+      PROCUREMENT_REJECTED: "/procurement",
       MAINTENANCE_REQUEST: "/maintenance",
       MAINTENANCE: "/maintenance",
       ALLOCATION_REQUEST: "/allocation",
