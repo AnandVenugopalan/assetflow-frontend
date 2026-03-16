@@ -37,9 +37,17 @@ export default function NewDisposalRequest() {
         const response = await api.get("/assets");
 
         // OPTIONAL: Filter assets that are valid for disposal
-        const filtered = response.data.filter(a =>
-          ["COMMISSIONED", "MAINTENANCE", "ALLOCATED"].includes(a.status)
-        );
+        const allowedStatuses = new Set([
+          "COMMISSIONED",
+          "MAINTENANCE",
+          "ALLOCATED",
+          "IN_OPERATION",
+        ]);
+
+        const filtered = response.data.filter((a) => {
+          const normalizedStatus = String(a?.status ?? "").trim().toUpperCase();
+          return allowedStatuses.has(normalizedStatus);
+        });
 
         setAssets(filtered);
       } catch (err) {

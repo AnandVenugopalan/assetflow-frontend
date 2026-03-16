@@ -17,13 +17,52 @@ import { toast } from "sonner";
 import { employees } from "@/lib/mockData";
 import api from "../lib/api";
 
+const CATEGORY_ASSET_TYPE_MAP = {
+  "it-assets": [
+    "Laptop",
+    "Desktop",
+    "Server",
+    "Printer",
+    "Scanner",
+    "Router",
+    "Network Switch",
+    "Firewall",
+    "Monitor",
+    "Keyboard",
+    "Mouse",
+    "Storage Device",
+  ],
+  "movable-assets": [
+    "Office Furniture",
+    "Appliances",
+    "Transport Equipment",
+    "Tools & Machinery",
+    "Audio Visual Equipment",
+  ],
+  "immovable-assets": [
+    "Land",
+    "Building",
+    "Office Space",
+    "Warehouse",
+    "Parking Area",
+    "Electrical Installations",
+    "Plumbing Systems",
+    "CCTV System",
+    "Fire Safety System",
+    "Solar Panels",
+  ],
+} as const;
+
+type CategoryKey = keyof typeof CATEGORY_ASSET_TYPE_MAP;
+
 export default function AddProcurement() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form state variables
   const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState<CategoryKey | "">("");
+  const [assetType, setAssetType] = useState("");
   const [priority, setPriority] = useState("");
   const [quantity, setQuantity] = useState("");
   const [department, setDepartment] = useState("");
@@ -38,14 +77,28 @@ export default function AddProcurement() {
   const [managerApprover, setManagerApprover] = useState("");
   const [additionalNotes, setAdditionalNotes] = useState("");
 
+  const assetTypeOptions = category ? CATEGORY_ASSET_TYPE_MAP[category] : [];
+
+  const handleCategoryChange = (value: string) => {
+    setCategory(value as CategoryKey);
+    setAssetType("");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!category || !assetType) {
+      toast.error("Please select both Category and Asset Type");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       const payload = {
         itemName: title,
         category,
+        assetType,
         quantity: Number(quantity),
         estimatedCost: Number(estimatedCost),
         vendor: preferredVendor,
@@ -100,21 +153,43 @@ export default function AddProcurement() {
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Category *</Label>
-                    <Select value={category} onValueChange={setCategory} required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="it">IT Equipment</SelectItem>
-                        <SelectItem value="furniture">Office Furniture</SelectItem>
-                        <SelectItem value="transport">Transport</SelectItem>
-                        <SelectItem value="infrastructure">IT Infrastructure</SelectItem>
-                        <SelectItem value="supplies">Office Supplies</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="category">Category *</Label>
+                      <Select value={category} onValueChange={handleCategoryChange} required>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="it-assets">IT Assets</SelectItem>
+                          <SelectItem value="movable-assets">Movable Assets</SelectItem>
+                          <SelectItem value="immovable-assets">Immovable Assets</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="assetType">Asset Type *</Label>
+                      <Select
+                        value={assetType}
+                        onValueChange={setAssetType}
+                        disabled={!category}
+                        required
+                      >
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={category ? "Select asset type" : "Select category first"}
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {assetTypeOptions.map((type) => (
+                            <SelectItem key={type} value={type}>
+                              {type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="priority">Priority *</Label>

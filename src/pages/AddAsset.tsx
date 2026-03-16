@@ -19,16 +19,35 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Save, Loader2, Download, CheckCircle, Eye, QrCode } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Download, CheckCircle, Eye, QrCode, Upload } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 import { toast } from "sonner";
 import api from "@/lib/api";
 
+type BulkUploadSummary = {
+  total: number;
+  success: number;
+  failed: number;
+  errors: string[];
+};
+
+const DEFAULT_PURCHASE_DATE = new Date().toISOString().split("T")[0];
+const ALLOWED_STATUSES = new Set([
+  "PROCUREMENT",
+  "COMMISSIONED",
+  "IN_OPERATION",
+  "MAINTENANCE",
+  "DISPOSAL",
+]);
+
 export default function AddAsset() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isBulkUploading, setIsBulkUploading] = useState(false);
   const [showQRDialog, setShowQRDialog] = useState(false);
   const [createdAsset, setCreatedAsset] = useState<any>(null);
+  const [bulkFile, setBulkFile] = useState<File | null>(null);
+  const [bulkSummary, setBulkSummary] = useState<BulkUploadSummary | null>(null);
 
   // Correct fields for backend schema
   const [name, setName] = useState("");
@@ -39,6 +58,182 @@ export default function AddAsset() {
   const [purchaseDate, setPurchaseDate] = useState("");
   const [status, setStatus] = useState("");
   const [description, setDescription] = useState("");
+
+  const readFileText = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(new Error("Unable to read file"));
+      reader.readAsText(file);
+    });
+
+  const parseCsvLine = (line: string) => {
+    const cells: string[] = [];
+    let current = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i += 1) {
+      const char = line[i];
+
+      if (char === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"';
+          i += 1;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === "," && !inQuotes) {
+        cells.push(current.trim());
+        current = "";
+      } else {
+        current += char;
+      }
+    }
+
+    cells.push(current.trim());
+    return cells;
+  };
+
+  const parseCsv = (text: string) => {
+    const rows = text
+      .split(/\r?\n/)
+      .map((row) => row.trim())
+      .filter(Boolean);
+
+    if (!rows.length) return [] as Record<string, string>[];
+
+    const headers = parseCsvLine(rows[0]).map((header) =>
+      header.toLowerCase().replace(/\s+/g, "")
+    );
+
+    return rows.slice(1).map((line) => {
+      const values = parseCsvLine(line);
+      const row: Record<string, string> = {};
+
+      headers.forEach((header, index) => {
+        row[header] = (values[index] || "").trim();
+      });
+
+      return row;
+    });
+  };
+
+  const pickValue = (row: Record<string, any>, keys: string[]) => {
+    for (const key of keys) {
+      const normalizedKey = key.toLowerCase().replace(/\s+/g, "");
+      const value = row[normalizedKey] ?? row[key];
+      if (value !== undefined && value !== null && String(value).trim()) {
+        return String(value).trim();
+      }
+    }
+    return "";
+  };
+
+  const normalizeStatus = (value: string) => {
+    const normalized = String(value || "")
+      .trim()
+      .toUpperCase()
+      .replace(/\s+/g, "_");
+
+    return ALLOWED_STATUSES.has(normalized) ? normalized : "PROCUREMENT";
+  };
+
+  const handleDownloadTemplate = () => {
+    const template = [
+      "name,category,department,vendor,purchaseCost,purchaseDate,status,description",
+      "Dell Laptop XPS,IT Equipment,Engineering,Dell,1200,2026-03-13,COMMISSIONED,Developer laptop",
+      "Office Chair,Furniture,Operations,IKEA,300,2026-03-13,IN_OPERATION,Ergonomic chair",
+    ].join("\n");
+
+    const blob = new Blob([template], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "asset-bulk-template.csv";
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
+  const handleBulkUpload = async () => {
+    if (!bulkFile) {
+      toast.error("Please choose a CSV or JSON file");
+      return;
+    }
+
+    setIsBulkUploading(true);
+    setBulkSummary(null);
+
+    try {
+      const text = await readFileText(bulkFile);
+      let parsedRows: Record<string, any>[] = [];
+
+      if (bulkFile.name.toLowerCase().endsWith(".json")) {
+        const parsed = JSON.parse(text);
+        parsedRows = Array.isArray(parsed) ? parsed : [];
+      } else {
+        parsedRows = parseCsv(text);
+      }
+
+      if (!parsedRows.length) {
+        toast.error("No asset rows found in the uploaded file");
+        return;
+      }
+
+      let success = 0;
+      let failed = 0;
+      const errors: string[] = [];
+
+      for (let index = 0; index < parsedRows.length; index += 1) {
+        const row = parsedRows[index] || {};
+        const nameValue = pickValue(row, ["name", "assetname", "itemname"]);
+        const categoryValue = pickValue(row, ["category"]);
+        const departmentValue = pickValue(row, ["department"]);
+
+        if (!nameValue || !categoryValue || !departmentValue) {
+          failed += 1;
+          errors.push(`Row ${index + 2}: missing required fields (name/category/department)`);
+          continue;
+        }
+
+        const payload = {
+          name: nameValue,
+          category: categoryValue,
+          department: departmentValue,
+          vendor: pickValue(row, ["vendor"]) || "Unknown",
+          purchaseCost: parseFloat(pickValue(row, ["purchasecost", "price"]) || "0"),
+          purchaseDate: pickValue(row, ["purchasedate"]) || DEFAULT_PURCHASE_DATE,
+          status: normalizeStatus(pickValue(row, ["status"])),
+          description: pickValue(row, ["description"]),
+        };
+
+        try {
+          await api.post("/assets", payload);
+          success += 1;
+        } catch (error: any) {
+          failed += 1;
+          const message = error?.response?.data?.message || "Failed to create asset";
+          errors.push(`Row ${index + 2}: ${message}`);
+        }
+      }
+
+      setBulkSummary({
+        total: parsedRows.length,
+        success,
+        failed,
+        errors,
+      });
+
+      if (success > 0) {
+        toast.success(`${success} assets uploaded successfully`);
+      }
+      if (failed > 0) {
+        toast.error(`${failed} rows failed during bulk upload`);
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "Bulk upload failed");
+    } finally {
+      setIsBulkUploading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -121,6 +316,71 @@ export default function AddAsset() {
 
       <form onSubmit={handleSubmit}>
         <div className="max-w-2xl space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Bulk Upload Assets</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Upload a CSV or JSON file to create multiple assets in one go.
+                Required fields per row: name, category, and department.
+              </p>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Button type="button" variant="outline" onClick={handleDownloadTemplate}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download CSV Template
+                </Button>
+
+                <Input
+                  type="file"
+                  accept=".csv,.json"
+                  onChange={(e) => setBulkFile(e.target.files?.[0] || null)}
+                />
+              </div>
+
+              <div className="flex items-center justify-between gap-3 rounded-lg border p-3">
+                <span className="text-sm text-muted-foreground">
+                  {bulkFile ? `Selected file: ${bulkFile.name}` : "No file selected"}
+                </span>
+                <Button
+                  type="button"
+                  className="gradient-primary"
+                  onClick={handleBulkUpload}
+                  disabled={!bulkFile || isBulkUploading}
+                >
+                  {isBulkUploading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload Bulk Data
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {bulkSummary && (
+                <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
+                  <p className="text-sm font-medium">Upload Summary</p>
+                  <p className="text-sm text-muted-foreground">
+                    Total: {bulkSummary.total} | Success: {bulkSummary.success} | Failed: {bulkSummary.failed}
+                  </p>
+                  {bulkSummary.errors.length > 0 && (
+                    <div className="max-h-32 overflow-y-auto rounded border bg-background p-2">
+                      {bulkSummary.errors.slice(0, 10).map((error) => (
+                        <p key={error} className="text-xs text-destructive">{error}</p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Asset Information</CardTitle>
