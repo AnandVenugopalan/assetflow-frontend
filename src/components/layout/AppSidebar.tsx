@@ -38,7 +38,7 @@ const ACCESS_MATRIX = {
 };
 
 const navigation = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Asset Register", url: "/assets", icon: Package },
   { title: "Scan QR Code", url: "/scan-qr", icon: QrCode },
   { title: "My Assets", url: "/my-assets", icon: Package },
