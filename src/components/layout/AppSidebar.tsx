@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 
 // RBAC access matrix
@@ -64,9 +65,17 @@ export function AppSidebar() {
 
   const userRole = user?.role || "USER";
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Logged out successfully!");
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Error logging out");
+      // Still navigate to login even if logout fails
+      navigate("/login");
+    }
   };
 
   // Filter navigation items by role

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import api from '@/lib/api';
+import { logoutUser } from '@/lib/auth';
 
 interface User {
   id: string;
@@ -13,7 +14,7 @@ interface AuthContextType {
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isLoading: boolean;
 }
 
@@ -72,11 +73,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+  const logout = async () => {
+    try {
+      // Call logout API endpoint
+      await logoutUser();
+    } catch (error) {
+      console.error('Logout API call failed:', error);
+      // Continue with logout even if API fails
+    } finally {
+      // Always clear local state and storage
+      setUser(null);
+      setToken(null);
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    }
   };
 
   const value: AuthContextType = {
