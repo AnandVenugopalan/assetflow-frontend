@@ -36,7 +36,7 @@ export default function Login() {
     try {
       await login(loginEmail, loginPassword);
       toast.success("Login successful!");
-      navigate("/");
+      navigate("/dashboard");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Invalid credentials");
     } finally {
@@ -57,7 +57,7 @@ export default function Login() {
     try {
       await register(signupName, signupEmail, signupPassword);
       toast.success("Account created successfully!");
-      navigate("/");
+      navigate("/dashboard");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Something went wrong");
     } finally {
