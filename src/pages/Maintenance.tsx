@@ -53,11 +53,6 @@ export default function Maintenance() {
     try {
       await api.patch(`/maintenance/${id}`, { status: newStatus });
       toast.success(newStatus === "Completed" ? "Maintenance record approved" : `Maintenance record updated to ${newStatus}`);
-      if (newStatus === "Completed") {
-        window.location.reload();
-        return;
-      }
-
       fetchMaintenance();
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to update maintenance record");
