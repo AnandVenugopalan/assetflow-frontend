@@ -35,6 +35,8 @@ import AddProcurement from "./pages/AddProcurement";
 import ViewProcurementRequest from "./pages/ViewProcurementRequest";
 import MyAssets from "./pages/MyAssets";
 import ScanQR from "./pages/ScanQR";
+import AdminGenerateQR from "./pages/AdminGenerateQR";
+import AdminAssetVerification from "./pages/StaffVerification";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -57,6 +59,8 @@ const App = () => (
               <Route path="/assets/add" element={<ProtectedRoute><AppLayout><AddAsset /></AppLayout></ProtectedRoute>} />
               <Route path="/assets/:id" element={<ProtectedRoute><AppLayout><AssetDetail /></AppLayout></ProtectedRoute>} />
               <Route path="/scan-qr" element={<ProtectedRoute><AppLayout><ScanQR /></AppLayout></ProtectedRoute>} />
+              <Route path="/qr-codes/generate" element={<ProtectedRoute><AppLayout><AdminGenerateQR /></AppLayout></ProtectedRoute>} />
+              <Route path="/assets/verify" element={<ProtectedRoute><AppLayout><AdminAssetVerification /></AppLayout></ProtectedRoute>} />
               <Route path="/procurement" element={<ProtectedRoute><AppLayout><Procurement /></AppLayout></ProtectedRoute>} />
               <Route path="/procurement/add" element={<ProtectedRoute><AppLayout><AddProcurement /></AppLayout></ProtectedRoute>} />
               <Route path="/procurement/requests/:id" element={<ProtectedRoute><AppLayout><ViewProcurementRequest /></AppLayout></ProtectedRoute>} />
