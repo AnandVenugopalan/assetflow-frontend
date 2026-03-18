@@ -77,7 +77,7 @@ export default function Login() {
             </div>
             <div>
               <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary-light bg-clip-text text-transparent">
-                AssetFlow
+                Asset Desk
               </h1>
               <p className="text-muted-foreground">Asset Lifecycle Management</p>
             </div>
@@ -116,7 +116,7 @@ export default function Login() {
                 <Package className="h-6 w-6 text-primary-foreground" />
               </div>
               <div>
-                <CardTitle className="text-2xl">AssetFlow</CardTitle>
+                <CardTitle className="text-2xl">Asset Desk</CardTitle>
                 <CardDescription>Asset Management</CardDescription>
               </div>
             </div>
