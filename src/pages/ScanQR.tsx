@@ -37,54 +37,35 @@ export default function ScanQR() {
   // Handle QR scan result
   const handleScan = async (data: any) => {
     if (data && isScanning) {
-      const scannedText = data.text || data;
-      console.log("Scanned QR Code:", scannedText);
+      const scannedQRCode = data.text || data;
       
       // Stop scanning temporarily to prevent multiple scans
       setIsScanning(false);
-      setScanResult(scannedText);
+      setScanResult(scannedQRCode);
       
-      // Try to extract asset ID from scanned data
-      // Assuming QR code contains asset ID directly or in a URL format
-      let assetId = scannedText;
-      
-      // If it's a URL, try to extract the ID
-      if (scannedText.includes("/assets/")) {
-        const matches = scannedText.match(/\/assets\/([^\/\?]+)/);
-        if (matches && matches[1]) {
-          assetId = matches[1];
-        }
-      }
-      
-      console.log("Extracted Asset ID:", assetId);
-      
-      // Fetch asset details using QR endpoint
-      await fetchAssetDetails(assetId);
+      // Fetch asset details using the QR code
+      await fetchAssetDetails(scannedQRCode);
     }
   };
 
   // Handle scan error
   const handleError = (err: any) => {
-    console.error("QR Scanner Error:", err);
     setCameraError("Unable to access camera. Please ensure camera permissions are granted.");
   };
 
-  // Fetch asset details by ID using QR endpoint
-  const fetchAssetDetails = async (assetId: string) => {
+  // Fetch asset details by QR code
+  const fetchAssetDetails = async (qrCode: string) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const response = await api.get(`/assets/qr/${assetId}`);
+      const response = await api.get(`/assets/qr/${qrCode}`);
       setAssetData(response.data);
       toast.success("Asset details loaded successfully!");
     } catch (err: any) {
-      console.error("Error fetching asset:", err);
-      
       // If asset not found (404), offer to create new asset
       if (err.response?.status === 404) {
         setError(`Asset not found. You can create a new asset with this QR code.`);
-        // Store the QR code for later navigation
       } else {
         const errorMsg = err.response?.data?.message || "Asset not found. Please try scanning again.";
         setError(errorMsg);
@@ -149,22 +130,11 @@ export default function ScanQR() {
         const code = jsQR(imageData.data, imageData.width, imageData.height);
 
         if (code) {
-          console.log("QR Code found in uploaded image:", code.data);
-          setScanResult(code.data);
+          const scannedQRCode = code.data;
+          setScanResult(scannedQRCode);
           
-          // Extract asset ID
-          let assetId = code.data;
-          if (code.data.includes("/assets/")) {
-            const matches = code.data.match(/\/assets\/([^\/\?]+)/);
-            if (matches && matches[1]) {
-              assetId = matches[1];
-            }
-          }
-          
-          console.log("Extracted Asset ID from upload:", assetId);
-          
-          // Fetch asset details using QR endpoint
-          fetchAssetDetails(assetId);
+          // Fetch asset details using the scanned QR code
+          fetchAssetDetails(scannedQRCode);
         } else {
           setIsLoading(false);
           setError("No QR code found in the image. Please try another image.");
