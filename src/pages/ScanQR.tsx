@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import QrScanner from "react-qr-scanner";
 import jsQR from "jsqr";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -80,9 +80,17 @@ export default function ScanQR() {
       toast.success("Asset details loaded successfully!");
     } catch (err: any) {
       console.error("Error fetching asset:", err);
-      const errorMsg = err.response?.data?.message || "Asset not found. Please try scanning again.";
-      setError(errorMsg);
-      toast.error(errorMsg);
+      
+      // If asset not found (404), offer to create new asset
+      if (err.response?.status === 404) {
+        setError(`Asset not found. You can create a new asset with this QR code.`);
+        // Store the QR code for later navigation
+      } else {
+        const errorMsg = err.response?.data?.message || "Asset not found. Please try scanning again.";
+        setError(errorMsg);
+        toast.error(errorMsg);
+      }
+      
       setAssetData(null);
     } finally {
       setIsLoading(false);
@@ -189,6 +197,20 @@ export default function ScanQR() {
   const viewFullDetails = () => {
     if (assetData?.id) {
       navigate(`/assets/${assetData.id}`);
+    }
+  };
+
+  // Navigate to asset register with search for scanned asset
+  const goToAssetRegister = () => {
+    if (assetData?.id) {
+      navigate(`/assets?search=${assetData.id}`);
+    }
+  };
+
+  // Create new asset with scanned QR code
+  const createNewAssetWithQR = () => {
+    if (scanResult) {
+      navigate("/assets/add", { state: { qrCode: scanResult } });
     }
   };
 
@@ -424,10 +446,20 @@ export default function ScanQR() {
             )}
 
             {error && !isLoading && (
-              <Alert variant="destructive">
-                <XCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
+              <div className="space-y-3">
+                <Alert variant="destructive">
+                  <XCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+                {scanResult && (
+                  <Button
+                    onClick={createNewAssetWithQR}
+                    className="w-full"
+                  >
+                    Create Asset with This QR
+                  </Button>
+                )}
+              </div>
             )}
 
             {assetData && !isLoading && (
@@ -505,6 +537,14 @@ export default function ScanQR() {
                     className="w-full"
                   >
                     View Full Details
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                  <Button
+                    onClick={goToAssetRegister}
+                    variant="secondary"
+                    className="w-full"
+                  >
+                    Go to Asset Register
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                   <Button
