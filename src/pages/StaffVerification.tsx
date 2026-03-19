@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ChevronLeft,
   Package,
@@ -9,6 +9,7 @@ import {
   Filter,
   CheckCircle2,
   Clock,
+  ChevronRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,30 +42,37 @@ export default function AdminAssetVerification() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  // Pagination constants
+  const ITEMS_PER_PAGE = 5;
+
   // State Management
   const [view, setView] = useState<ViewType>('HOME');
   const [searchInput, setSearchInput] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [assets, setAssets] = useState<Asset[]>([]);
+  const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Fetch All Assets or Search
-  const handleSearch = async (query: string) => {
+  // Fetch All Assets on Mount
+  useEffect(() => {
+    fetchAllAssets();
+  }, []);
+
+  // Fetch initial asset list
+  const fetchAllAssets = async () => {
     setIsSearching(true);
     try {
-      if (query.trim()) {
-        const response = await api.get(`/assets/search?q=${query}`);
-        setAssets(response.data);
-      } else {
-        const response = await api.get(`/assets?status=${filterStatus === 'ALL' ? '' : filterStatus}`);
-        setAssets(response.data);
-      }
+      const response = await api.get(`/assets`);
+      setAssets(response.data || []);
+      setFilteredAssets(response.data || []);
+      setCurrentPage(1);
     } catch (error) {
-      console.error('Search error:', error);
+      console.error('Fetch error:', error);
       // Mock data for demo
-      setAssets([
+      const mockData = [
         {
           id: '1',
           name: 'Laptop Dell XPS',
@@ -100,11 +108,83 @@ export default function AdminAssetVerification() {
           createdAt: '2024-03-01',
           lastVerifiedDate: null,
         },
-      ]);
+        {
+          id: '4',
+          name: 'Monitor LG 27"',
+          serialNumber: 'LG-MON-004',
+          category: 'IT Equipment',
+          status: 'IN_OPERATION',
+          imageUrl: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=400&fit=crop',
+          location: 'Building A - Floor 2',
+          department: 'IT Department',
+          createdAt: '2024-01-10',
+          lastVerifiedDate: '2026-03-05',
+        },
+        {
+          id: '5',
+          name: 'Keyboard Mechanical',
+          serialNumber: 'KEEB-MEC-005',
+          category: 'IT Equipment',
+          status: 'MAINTENANCE',
+          location: 'Building B - Storage',
+          department: 'IT Department',
+          createdAt: '2024-02-15',
+          lastVerifiedDate: null,
+        },
+        {
+          id: '6',
+          name: 'Mouse Logitech',
+          serialNumber: 'MOUSE-LG-006',
+          category: 'IT Equipment',
+          status: 'IN_OPERATION',
+          location: 'Building A - Floor 1',
+          department: 'Operations',
+          createdAt: '2024-02-10',
+          lastVerifiedDate: '2026-02-20',
+        },
+      ];
+      setAssets(mockData);
+      setFilteredAssets(mockData);
+      setCurrentPage(1);
       toast.error('Using sample data. API unavailable.');
     } finally {
       setIsSearching(false);
     }
+  };
+
+  // Handle Search and Filter
+  const handleSearchAndFilter = (query: string, status: string) => {
+    let filtered = assets;
+
+    // Apply search filter
+    if (query.trim()) {
+      const q = query.toLowerCase();
+      filtered = filtered.filter(asset =>
+        asset.name.toLowerCase().includes(q) ||
+        asset.serialNumber.toLowerCase().includes(q) ||
+        asset.id.toLowerCase().includes(q)
+      );
+    }
+
+    // Apply status filter
+    if (status !== 'ALL') {
+      filtered = filtered.filter(asset => asset.status === status);
+    }
+
+    setFilteredAssets(filtered);
+    setCurrentPage(1); // Reset to first page
+  };
+
+  // Handle search input change
+  const handleSearchChange = (value: string) => {
+    setSearchInput(value);
+    handleSearchAndFilter(value, filterStatus);
+  };
+
+  // Handle status filter change
+  const handleStatusChange = (status: string) => {
+    setFilterStatus(status);
+    handleSearchAndFilter(searchInput, status);
   };
 
   // Mark Asset as Verified
@@ -113,18 +193,19 @@ export default function AdminAssetVerification() {
 
     setIsVerifying(true);
     try {
-      await api.post(`/assets/${selectedAsset.id}/verify`, {
-        verifiedBy: user?.name || 'Admin',
-        verifiedAt: new Date().toISOString(),
-        notes: `Verified by admin on ${new Date().toLocaleDateString()}`,
+      const response = await api.patch(`/assets/${selectedAsset.id}/verify`, {
+        remarks: `Verified by ${user?.name || 'Admin'} on ${new Date().toLocaleDateString()}`,
+        condition: 'GOOD',
       });
 
       toast.success(`✓ "${selectedAsset.name}" verified successfully`);
       setView('HOME');
       setSelectedAsset(null);
       
-      // Refresh the list
-      handleSearch(searchInput);
+      // Refresh the list to get updated verification status from backend
+      setTimeout(() => {
+        fetchAllAssets();
+      }, 300);
     } catch (error: any) {
       toast.error('Failed to verify asset');
       console.error(error);
@@ -171,10 +252,7 @@ export default function AdminAssetVerification() {
                     type="text"
                     placeholder="e.g., Laptop, DELL-001, or XPS..."
                     value={searchInput}
-                    onChange={(e) => {
-                      setSearchInput(e.target.value);
-                      handleSearch(e.target.value);
-                    }}
+                    onChange={(e) => handleSearchChange(e.target.value)}
                     className="mt-2 w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400"
                   />
                 </div>
@@ -188,10 +266,7 @@ export default function AdminAssetVerification() {
                     {['ALL', 'IN_OPERATION', 'MAINTENANCE', 'COMMISSIONED', 'DISPOSAL'].map((status) => (
                       <button
                         key={status}
-                        onClick={() => {
-                          setFilterStatus(status);
-                          handleSearch(searchInput);
-                        }}
+                        onClick={() => handleStatusChange(status)}
                         className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
                           filterStatus === status
                             ? 'bg-indigo-600 text-white'
@@ -214,68 +289,123 @@ export default function AdminAssetVerification() {
             </div>
           )}
 
-          {/* Assets Grid */}
-          {!isSearching && assets.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              {assets.map((asset) => (
-                <button
-                  key={asset.id}
-                  onClick={() => {
-                    setSelectedAsset(asset);
-                    setView('DETAIL');
-                  }}
-                  className="text-left bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-lg hover:border-indigo-300 dark:hover:border-indigo-600 transition-all group"
-                >
-                  {/* Asset Image */}
-                  <div className="w-full h-40 rounded-lg bg-slate-200 dark:bg-slate-700 overflow-hidden flex items-center justify-center mb-4 group-hover:opacity-90 transition-opacity">
-                    {asset.imageUrl ? (
-                      <img src={asset.imageUrl} alt={asset.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <Package className="w-12 h-12 text-slate-400" />
-                    )}
-                  </div>
+          {/* Assets Grid with Pagination */}
+          {!isSearching && filteredAssets.length > 0 && (
+            <>
+              {/* Pagination Info */}
+              <div className="mb-4 flex items-center justify-between">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Showing <span className="font-semibold">{((currentPage - 1) * ITEMS_PER_PAGE) + 1}</span> - <span className="font-semibold">{Math.min(currentPage * ITEMS_PER_PAGE, filteredAssets.length)}</span> of <span className="font-semibold">{filteredAssets.length}</span> assets
+                </p>
+              </div>
 
-                  {/* Asset Info */}
-                  <div className="space-y-2">
-                    <h3 className="font-bold text-slate-900 dark:text-white line-clamp-1">{asset.name}</h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{asset.serialNumber}</p>
+              {/* Assets Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                {filteredAssets
+                  .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+                  .map((asset) => (
+                    <button
+                      key={asset.id}
+                      onClick={() => {
+                        setSelectedAsset(asset);
+                        setView('DETAIL');
+                      }}
+                      className="text-left bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-lg hover:border-indigo-300 dark:hover:border-indigo-600 transition-all group"
+                    >
+                      {/* Asset Image */}
+                      <div className="w-full h-40 rounded-lg bg-slate-200 dark:bg-slate-700 overflow-hidden flex items-center justify-center mb-4 group-hover:opacity-90 transition-opacity">
+                        {asset.imageUrl ? (
+                          <img src={asset.imageUrl} alt={asset.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <Package className="w-12 h-12 text-slate-400" />
+                        )}
+                      </div>
 
-                    <div className="flex items-center gap-2 flex-wrap pt-2">
-                      <Badge
-                        variant="outline"
-                        className={`text-xs font-semibold ${
-                          asset.status === 'IN_OPERATION'
-                            ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
-                            : 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                      {/* Asset Info */}
+                      <div className="space-y-2">
+                        <h3 className="font-bold text-slate-900 dark:text-white line-clamp-1">{asset.name}</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{asset.serialNumber}</p>
+
+                        <div className="flex items-center gap-2 flex-wrap pt-2">
+                          <Badge
+                            variant="outline"
+                            className={`text-xs font-semibold ${
+                              asset.status === 'IN_OPERATION'
+                                ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                                : 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                            }`}
+                          >
+                            {asset.status?.replace('_', ' ')}
+                          </Badge>
+                          {asset.lastVerifiedDate ? (
+                            <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                              <CheckCircle2 className="w-3 h-3" />
+                              Verified
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400">
+                              <Clock className="w-3 h-3" />
+                              Pending
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="text-xs text-slate-600 dark:text-slate-400 pt-2 space-y-1">
+                          {asset.location && <p>📍 {asset.location}</p>}
+                          {asset.department && <p>🏢 {asset.department}</p>}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+              </div>
+
+              {/* Pagination Controls */}
+              {Math.ceil(filteredAssets.length / ITEMS_PER_PAGE) > 1 && (
+                <div className="flex items-center justify-center gap-2 mb-6">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="flex items-center gap-2"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    Previous
+                  </Button>
+
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.ceil(filteredAssets.length / ITEMS_PER_PAGE) }).map((_, index) => (
+                      <button
+                        key={index + 1}
+                        onClick={() => setCurrentPage(index + 1)}
+                        className={`w-8 h-8 rounded-md text-sm font-semibold transition-colors ${
+                          currentPage === index + 1
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                         }`}
                       >
-                        {asset.status?.replace('_', ' ')}
-                      </Badge>
-                      {asset.lastVerifiedDate ? (
-                        <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-                          <CheckCircle2 className="w-3 h-3" />
-                          Verified
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400">
-                          <Clock className="w-3 h-3" />
-                          Pending
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="text-xs text-slate-600 dark:text-slate-400 pt-2 space-y-1">
-                      {asset.location && <p>📍 {asset.location}</p>}
-                      {asset.department && <p>🏢 {asset.department}</p>}
-                    </div>
+                        {index + 1}
+                      </button>
+                    ))}
                   </div>
-                </button>
-              ))}
-            </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.min(Math.ceil(filteredAssets.length / ITEMS_PER_PAGE), currentPage + 1))}
+                    disabled={currentPage === Math.ceil(filteredAssets.length / ITEMS_PER_PAGE)}
+                    className="flex items-center gap-2"
+                  >
+                    Next
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </>
           )}
 
           {/* Empty State */}
-          {!isSearching && assets.length === 0 && searchInput && (
+          {!isSearching && filteredAssets.length === 0 && (
             <div className="text-center py-12">
               <AlertCircle className="w-12 h-12 text-slate-400 mx-auto mb-3" />
               <p className="text-slate-600 dark:text-slate-400 font-medium">No assets found</p>
