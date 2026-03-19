@@ -267,8 +267,7 @@ export default function AddAsset() {
       purchaseDate,
       status: status || "PROCUREMENT",
       description,
-      // Try both field names for QR code
-      ...(qrCode && { qrCode, qr_code: qrCode }), // Include QR code if present
+      ...(qrCode && { qrCode }), // Include QR code if present (backend expects lowercase)
     };
 
     setIsSubmitting(true);
@@ -276,16 +275,12 @@ export default function AddAsset() {
       const response = await api.post("/assets", payload);
       const newAsset = response.data;
       
-      console.log("Asset creation payload:", payload);
-      console.log("Asset creation response:", newAsset);
-      
       // Store the created asset and show confirmation dialog
       setCreatedAsset(newAsset);
       setShowQRDialog(true);
       
       // If QR code was pre-filled, inform user it was registered with that QR
       if (qrCode) {
-        console.log("Asset created with QR code:", qrCode);
         toast.success(`✅ Asset created successfully with QR code ${qrCode}!`);
       } else {
         toast.success("✅ Asset created successfully!");
