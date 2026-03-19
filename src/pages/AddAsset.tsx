@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +42,7 @@ const ALLOWED_STATUSES = new Set([
 
 export default function AddAsset() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isBulkUploading, setIsBulkUploading] = useState(false);
   const [showQRDialog, setShowQRDialog] = useState(false);
@@ -58,6 +59,15 @@ export default function AddAsset() {
   const [purchaseDate, setPurchaseDate] = useState("");
   const [status, setStatus] = useState("");
   const [description, setDescription] = useState("");
+  const [qrCode, setQrCode] = useState("");
+
+  // Get QR code from navigation state
+  useEffect(() => {
+    const state = location.state as any;
+    if (state?.qrCode) {
+      setQrCode(state.qrCode);
+    }
+  }, [location]);
 
   const readFileText = (file: File) =>
     new Promise<string>((resolve, reject) => {
@@ -257,6 +267,8 @@ export default function AddAsset() {
       purchaseDate,
       status: status || "PROCUREMENT",
       description,
+      // Try both field names for QR code
+      ...(qrCode && { qrCode, qr_code: qrCode }), // Include QR code if present
     };
 
     setIsSubmitting(true);
@@ -264,11 +276,20 @@ export default function AddAsset() {
       const response = await api.post("/assets", payload);
       const newAsset = response.data;
       
-      // Store the created asset and show QR dialog
+      console.log("Asset creation payload:", payload);
+      console.log("Asset creation response:", newAsset);
+      
+      // Store the created asset and show confirmation dialog
       setCreatedAsset(newAsset);
       setShowQRDialog(true);
       
-      toast.success("✅ Asset created successfully!");
+      // If QR code was pre-filled, inform user it was registered with that QR
+      if (qrCode) {
+        console.log("Asset created with QR code:", qrCode);
+        toast.success(`✅ Asset created successfully with QR code ${qrCode}!`);
+      } else {
+        toast.success("✅ Asset created successfully!");
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || "Error creating asset");
     } finally {
@@ -387,6 +408,15 @@ export default function AddAsset() {
             </CardHeader>
             <CardContent className="space-y-4">
               
+              {/* QR Code (if coming from scan) */}
+              {qrCode && (
+                <div className="space-y-2">
+                  <Label>QR Code</Label>
+                  <Input value={qrCode} disabled className="bg-muted" />
+                  <p className="text-xs text-muted-foreground">This asset will be linked to QR code {qrCode}</p>
+                </div>
+              )}
+
               {/* Name & Category */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -520,42 +550,64 @@ export default function AddAsset() {
               </div>
             </div>
 
-            {/* QR Code */}
-            <div className="flex justify-center p-6 bg-white rounded-lg border">
-              <QRCodeCanvas
-                id="new-asset-qr-code"
-                value={createdAsset?.id || ""}
-                size={200}
-                level="H"
-                includeMargin={true}
-              />
-            </div>
-
-            {/* Instructions */}
-            <div className="text-xs text-muted-foreground space-y-1 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-              <p className="font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2">
-                <QrCode className="h-3 w-3" />
-                Next Steps:
-              </p>
-              <ul className="list-disc list-inside space-y-1 ml-2 text-blue-800 dark:text-blue-200">
-                <li>Download and print this QR code</li>
-                <li>Attach it to the physical asset</li>
-                <li>Use QR Scanner to access asset details instantly</li>
-              </ul>
-            </div>
+            {/* QR Code - Show scanned QR if pre-filled, otherwise generate new one */}
+            {qrCode ? (
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-center">Asset registered with QR Code:</p>
+                <div className="text-center font-bold text-2xl text-primary">{qrCode}</div>
+                <div className="flex justify-center p-6 bg-white rounded-lg border">
+                  <QRCodeCanvas
+                    id="new-asset-qr-code"
+                    value={qrCode}
+                    size={200}
+                    level="H"
+                    includeMargin={true}
+                  />
+                </div>
+                <div className="text-xs text-green-700 dark:text-green-300 p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                  <p className="font-medium">✅ Asset successfully linked to your scanned QR code.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-center">QR Code for this asset:</p>
+                <div className="flex justify-center p-6 bg-white rounded-lg border">
+                  <QRCodeCanvas
+                    id="new-asset-qr-code"
+                    value={createdAsset?.id || ""}
+                    size={200}
+                    level="H"
+                    includeMargin={true}
+                  />
+                </div>
+                <div className="text-xs text-muted-foreground space-y-1 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <p className="font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                    <QrCode className="h-3 w-3" />
+                    Next Steps:
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 ml-2 text-blue-800 dark:text-blue-200">
+                    <li>Download and print this QR code</li>
+                    <li>Attach it to the physical asset</li>
+                    <li>Use QR Scanner to access asset details instantly</li>
+                  </ul>
+                </div>
+              </div>
+            )}
 
             {/* Actions */}
             <div className="flex flex-col gap-2">
-              <Button
-                onClick={downloadQRCode}
-                variant="outline"
-                className="w-full"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Download QR Code
-              </Button>
+              {!qrCode && (
+                <Button
+                  onClick={downloadQRCode}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download QR Code
+                </Button>
+              )}
               
-              <div className="grid grid-cols-2 gap-2">
+              <div className={`grid gap-2 ${qrCode ? 'grid-cols-1' : 'grid-cols-2'}`}>
                 <Button
                   onClick={viewAssetDetails}
                   variant="outline"
