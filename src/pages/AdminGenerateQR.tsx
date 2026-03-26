@@ -164,29 +164,29 @@ export default function AdminGenerateQR() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            className="p-2 hover:bg-muted rounded-lg transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+            <ArrowLeft className="w-5 h-5 text-muted-foreground" />
           </button>
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Generate QR Codes</h1>
-            <p className="text-slate-600 dark:text-slate-400 mt-1">Create bulk QR codes for asset stickers</p>
+            <h1 className="text-3xl font-bold text-foreground">Generate QR Codes</h1>
+            <p className="text-muted-foreground mt-1">Create bulk QR codes for asset stickers</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Card - Left Side */}
           <div className="lg:col-span-1">
-            <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+            <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
-                  <QrCode className="w-5 h-5 text-indigo-600" />
+                <CardTitle className="flex items-center gap-2 text-foreground">
+                  <QrCode className="w-5 h-5 text-primary" />
                   QR Code Batch Generation
                 </CardTitle>
               </CardHeader>
@@ -194,7 +194,7 @@ export default function AdminGenerateQR() {
                 <form onSubmit={handleGenerate} className="space-y-6">
                   {/* Input Field */}
                   <div className="space-y-3">
-                    <Label htmlFor="quantity" className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    <Label htmlFor="quantity" className="text-sm font-semibold text-foreground">
                       Number of QR Codes
                     </Label>
                     <Input 
@@ -207,27 +207,27 @@ export default function AdminGenerateQR() {
                         setQuantity(parseInt(e.target.value) || 1);
                         setError(null);
                       }}
-                      className="w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400"
+                      className="w-full bg-background border-border text-foreground placeholder-muted-foreground"
                       placeholder="Enter number between 1 and 100"
                     />
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                    <p className="text-xs text-muted-foreground">
                       Enter a value between 1 and 100 codes per batch.
                     </p>
                   </div>
 
                   {/* Error Display */}
                   {error && (
-                    <Alert className="bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
-                      <AlertDescription className="text-red-700 dark:text-red-300 text-sm">
+                    <Alert className="bg-destructive/10 border-destructive/20">
+                      <AlertDescription className="text-destructive text-sm">
                         {error}
                       </AlertDescription>
                     </Alert>
                   )}
 
                   {/* Info Alert */}
-                  <Alert className="bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800">
-                    <Download className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                    <AlertDescription className="text-indigo-700 dark:text-indigo-300 ml-2 text-xs">
+                  <Alert className="bg-primary/10 border-primary/20">
+                    <Download className="h-4 w-4 text-primary" />
+                    <AlertDescription className="text-primary ml-2 text-xs">
                       <strong>How it works:</strong> Generate a PDF with unique QR stickers, print them, and apply to physical assets.
                     </AlertDescription>
                   </Alert>
@@ -236,7 +236,7 @@ export default function AdminGenerateQR() {
                   <Button 
                     type="submit" 
                     disabled={isGenerating || !isValidQuantity}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white py-6 text-base font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-primary hover:bg-primary text-primary-foreground py-6 text-base font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isGenerating ? (
                       <>
@@ -255,14 +255,14 @@ export default function AdminGenerateQR() {
             </Card>
 
             {/* Additional Info Section */}
-            <Card className="mt-6 bg-slate-100 dark:bg-slate-700/50 border-slate-200 dark:border-slate-700">
+            <Card className="mt-6 bg-secondary/30">
               <CardContent className="pt-6">
                 <div className="space-y-3">
-                  <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center font-bold">📋</span>
+                  <h3 className="font-semibold text-foreground flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold">📋</span>
                     Batch Details
                   </h3>
-                  <ul className="space-y-2 text-xs text-slate-700 dark:text-slate-300">
+                    <ul className="space-y-2 text-xs text-muted-foreground">
                     <li>• <strong>Grid Layout:</strong> 3 columns per page</li>
                     <li>• <strong>Size Per Code:</strong> 55mm × 65mm</li>
                     <li>• <strong>Auto-pagination:</strong> Multiple pages if needed</li>
@@ -275,48 +275,48 @@ export default function AdminGenerateQR() {
 
           {/* Batch History - Right Side */}
           <div className="lg:col-span-2">
-            <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+            <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-slate-900 dark:text-white">Batch History</CardTitle>
+                  <CardTitle className="text-foreground">Batch History</CardTitle>
                   <button
                     onClick={fetchBatches}
                     disabled={isLoadingBatches}
-                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
+                    className="p-2 hover:bg-muted rounded-lg transition-colors disabled:opacity-50"
                   >
-                    <RotateCw className={`w-4 h-4 text-slate-600 dark:text-slate-400 ${isLoadingBatches ? 'animate-spin' : ''}`} />
+                    <RotateCw className={`w-4 h-4 text-muted-foreground ${isLoadingBatches ? 'animate-spin' : ''}`} />
                   </button>
                 </div>
               </CardHeader>
               <CardContent>
                 {isLoadingBatches ? (
                   <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
                   </div>
                 ) : batches.length > 0 ? (
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
-                        <TableRow className="border-slate-200 dark:border-slate-700">
-                          <TableHead className="text-slate-700 dark:text-slate-300">Batch #</TableHead>
-                          <TableHead className="text-slate-700 dark:text-slate-300">Range</TableHead>
-                          <TableHead className="text-slate-700 dark:text-slate-300 text-center">Qty</TableHead>
-                          <TableHead className="text-slate-700 dark:text-slate-300">Date</TableHead>
+                        <TableRow className="border-border">
+                          <TableHead className="text-muted-foreground">Batch #</TableHead>
+                          <TableHead className="text-muted-foreground">Range</TableHead>
+                          <TableHead className="text-muted-foreground text-center">Qty</TableHead>
+                          <TableHead className="text-muted-foreground">Date</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {batches.map((batch) => (
-                          <TableRow key={batch.id} className="border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                            <TableCell className="font-semibold text-slate-900 dark:text-white">
+                          <TableRow key={batch.id} className="border-border hover:bg-muted">
+                            <TableCell className="font-semibold text-foreground">
                               #{batch.batchNumber}
                             </TableCell>
-                            <TableCell className="text-sm text-slate-600 dark:text-slate-400 font-mono">
+                            <TableCell className="text-sm text-muted-foreground font-mono">
                               {formatNumber(batch.startNumber)} - {formatNumber(batch.endNumber)}
                             </TableCell>
-                            <TableCell className="text-center text-slate-900 dark:text-white font-semibold">
+                            <TableCell className="text-center text-foreground font-semibold">
                               {batch.quantity}
                             </TableCell>
-                            <TableCell className="text-sm text-slate-600 dark:text-slate-400">
+                            <TableCell className="text-sm text-muted-foreground">
                               {formatDate(batch.createdAt)}
                             </TableCell>
                           </TableRow>
@@ -326,9 +326,9 @@ export default function AdminGenerateQR() {
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <QrCode className="w-12 h-12 text-slate-300 dark:text-slate-600 mb-2" />
-                    <p className="text-slate-600 dark:text-slate-400">No batches generated yet</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">Generate your first batch to see it here</p>
+                    <QrCode className="w-12 h-12 text-muted/50 mb-2" />
+                    <p className="text-muted-foreground">No batches generated yet</p>
+                    <p className="text-xs text-muted-foreground/70 mt-1">Generate your first batch to see it here</p>
                   </div>
                 )}
               </CardContent>

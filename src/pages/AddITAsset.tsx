@@ -418,7 +418,7 @@ export default function AddITAsset() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
+              <CheckCircle className="h-5 w-5 text-success" />
               Asset Created Successfully!
             </DialogTitle>
             <DialogDescription>
@@ -453,12 +453,12 @@ export default function AddITAsset() {
             </div>
 
             {/* Instructions */}
-            <div className="text-xs text-muted-foreground space-y-1 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-              <p className="font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2">
+            <div className="text-xs text-muted-foreground space-y-1 p-3 bg-info/10 rounded-lg border border-info/20">
+              <p className="font-medium text-info flex items-center gap-2">
                 <QrCode className="h-3 w-3" />
                 Next Steps:
               </p>
-              <ul className="list-disc list-inside space-y-1 ml-2 text-blue-800 dark:text-blue-200">
+              <ul className="list-disc list-inside space-y-1 ml-2 text-info/80">
                 <li>Download and print this QR code</li>
                 <li>Attach it to the physical asset</li>
                 <li>Use QR Scanner to access asset details instantly</li>

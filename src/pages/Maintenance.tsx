@@ -60,18 +60,18 @@ export default function Maintenance() {
   };
 
   const getStatusColor = (status: string) => {
-    if (isCompletedStatus(status)) return "bg-green-100 text-green-700 border-green-300";
-    if (isInProgressStatus(status)) return "bg-yellow-100 text-yellow-700 border-yellow-300";
-    if (isScheduledStatus(status)) return "bg-blue-100 text-blue-700 border-blue-300";
-    return "bg-gray-100 text-gray-700 border-gray-300";
+    if (isCompletedStatus(status)) return "bg-success/10 text-success border-success/20";
+    if (isInProgressStatus(status)) return "bg-warning/10 text-warning border-warning/20";
+    if (isScheduledStatus(status)) return "bg-primary/10 text-primary border-primary/20";
+    return "bg-muted text-muted-foreground border-border";
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case "High": return "bg-red-100 text-red-700 border-red-300";
-      case "Medium": return "bg-yellow-100 text-yellow-700 border-yellow-300";
-      case "Low": return "bg-gray-100 text-gray-700 border-gray-300";
-      default: return "bg-gray-100 text-gray-700 border-gray-300";
+      case "High": return "bg-destructive/10 text-destructive border-destructive/20";
+      case "Medium": return "bg-warning/10 text-warning border-warning/20";
+      case "Low": return "bg-muted text-muted-foreground border-border";
+      default: return "bg-muted text-muted-foreground border-border";
     }
   };
 
@@ -253,7 +253,7 @@ export default function Maintenance() {
                                 onClick={() => handleUpdateStatus(record.id, "Completed")}
                                 className={
                                   isCompletedStatus(record.status)
-                                    ? "bg-green-600 text-white hover:bg-green-600 disabled:opacity-100 disabled:text-white"
+                                    ? "bg-success text-success-foreground hover:bg-success disabled:opacity-100 disabled:text-success-foreground"
                                     : ""
                                 }
                               >

@@ -143,9 +143,9 @@ export default function Allocation() {
       case "returned":
         return "bg-muted text-muted-foreground border-border";
       case "checked_out":
-        return "bg-blue-500/10 text-blue-600 border-blue-500/20";
+        return "bg-primary/10 text-primary border-primary/20";
       case "checked_in":
-        return "bg-green-500/10 text-green-600 border-green-500/20";
+        return "bg-success/10 text-success border-success/20";
       default:
         return "bg-muted text-muted-foreground border-border";
     }
