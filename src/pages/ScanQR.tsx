@@ -187,14 +187,14 @@ export default function ScanQR() {
   // Get status color
   const getStatusColor = (status: string) => {
     const statusMap: Record<string, string> = {
-      ACTIVE: "bg-green-100 text-green-800 border-green-200",
-      IN_USE: "bg-blue-100 text-blue-800 border-blue-200",
-      MAINTENANCE: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      RETIRED: "bg-gray-100 text-gray-800 border-gray-200",
-      AVAILABLE: "bg-cyan-100 text-cyan-800 border-cyan-200",
-      DISPOSED: "bg-red-100 text-red-800 border-red-200",
+      ACTIVE: "bg-success/10 text-success border-success/20",
+      IN_USE: "bg-primary/10 text-primary border-primary/20",
+      MAINTENANCE: "bg-warning/10 text-warning border-warning/20",
+      RETIRED: "bg-muted text-muted-foreground border-border",
+      AVAILABLE: "bg-info/10 text-info border-info/20",
+      DISPOSED: "bg-destructive/10 text-destructive border-destructive/20",
     };
-    return statusMap[status] || "bg-gray-100 text-gray-800 border-gray-200";
+    return statusMap[status] || "bg-muted text-muted-foreground border-border";
   };
 
   return (
@@ -285,12 +285,12 @@ export default function ScanQR() {
                         </div>
                       ) : assetData ? (
                         <div className="text-center space-y-2">
-                          <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
+                          <CheckCircle className="h-16 w-16 text-success mx-auto" />
                           <p className="text-lg font-semibold">Asset Scanned Successfully!</p>
                         </div>
                       ) : error ? (
                         <div className="text-center space-y-2">
-                          <XCircle className="h-16 w-16 text-red-500 mx-auto" />
+                          <XCircle className="h-16 w-16 text-destructive mx-auto" />
                           <p className="text-lg font-semibold">Scan Failed</p>
                         </div>
                       ) : null}
@@ -360,9 +360,9 @@ export default function ScanQR() {
                     )}
 
                     {assetData && !isLoading && (
-                      <Alert className="bg-green-50 border-green-200">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                        <AlertDescription className="text-green-800">
+                      <Alert className="bg-success/10 border-success/20">
+                        <CheckCircle className="h-4 w-4 text-success" />
+                        <AlertDescription className="text-success">
                           QR code detected and asset loaded successfully!
                         </AlertDescription>
                       </Alert>

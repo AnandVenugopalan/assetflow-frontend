@@ -217,25 +217,25 @@ export default function AdminAssetVerification() {
   // ==================== HOME VIEW ====================
   if (view === 'HOME') {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-6">
+      <div className="min-h-screen bg-background p-6">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-2">
-              <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Asset Verification</h1>
-              <span className="text-sm text-slate-600 dark:text-slate-400">
+              <h1 className="text-3xl font-bold text-foreground">Asset Verification</h1>
+              <span className="text-sm text-muted-foreground">
                 Admin Verification Panel
               </span>
             </div>
-            <p className="text-slate-600 dark:text-slate-400 mt-2">
+            <p className="text-muted-foreground mt-2">
               Review and verify assets in your inventory
             </p>
           </div>
 
           {/* Search & Filter Card */}
-          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 mb-6">
+          <Card className="mb-6">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
+              <CardTitle className="flex items-center gap-2 text-foreground">
                 <Search className="w-5 h-5" />
                 Search & Filter Assets
               </CardTitle>
@@ -244,7 +244,7 @@ export default function AdminAssetVerification() {
               <div className="space-y-4">
                 {/* Search Input */}
                 <div>
-                  <Label htmlFor="search" className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <Label htmlFor="search" className="text-sm font-semibold text-foreground">
                     Search by Name, ID, or Serial
                   </Label>
                   <Input
@@ -253,13 +253,13 @@ export default function AdminAssetVerification() {
                     placeholder="e.g., Laptop, DELL-001, or XPS..."
                     value={searchInput}
                     onChange={(e) => handleSearchChange(e.target.value)}
-                    className="mt-2 w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400"
+                    className="mt-2 w-full bg-background border-border text-foreground placeholder-muted-foreground"
                   />
                 </div>
 
                 {/* Status Filter */}
                 <div>
-                  <Label htmlFor="status" className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <Label htmlFor="status" className="text-sm font-semibold text-foreground">
                     Filter by Status
                   </Label>
                   <div className="mt-2 flex gap-2 flex-wrap">
@@ -269,8 +269,8 @@ export default function AdminAssetVerification() {
                         onClick={() => handleStatusChange(status)}
                         className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
                           filterStatus === status
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
                         }`}
                       >
                         {status === 'ALL' ? 'All Assets' : status.replace('_', ' ')}
@@ -285,7 +285,7 @@ export default function AdminAssetVerification() {
           {/* Loading State */}
           {isSearching && (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
           )}
 
@@ -294,7 +294,7 @@ export default function AdminAssetVerification() {
             <>
               {/* Pagination Info */}
               <div className="mb-4 flex items-center justify-between">
-                <p className="text-sm text-slate-600 dark:text-slate-400">
+                <p className="text-sm text-muted-foreground">
                   Showing <span className="font-semibold">{((currentPage - 1) * ITEMS_PER_PAGE) + 1}</span> - <span className="font-semibold">{Math.min(currentPage * ITEMS_PER_PAGE, filteredAssets.length)}</span> of <span className="font-semibold">{filteredAssets.length}</span> assets
                 </p>
               </div>
@@ -310,47 +310,47 @@ export default function AdminAssetVerification() {
                         setSelectedAsset(asset);
                         setView('DETAIL');
                       }}
-                      className="text-left bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-lg hover:border-indigo-300 dark:hover:border-indigo-600 transition-all group"
+                      className="text-left bg-card border border-border rounded-lg p-4 hover:shadow-lg hover:border-primary transition-all group"
                     >
                       {/* Asset Image */}
-                      <div className="w-full h-40 rounded-lg bg-slate-200 dark:bg-slate-700 overflow-hidden flex items-center justify-center mb-4 group-hover:opacity-90 transition-opacity">
+                      <div className="w-full h-40 rounded-lg bg-muted overflow-hidden flex items-center justify-center mb-4 group-hover:opacity-90 transition-opacity">
                         {asset.imageUrl ? (
                           <img src={asset.imageUrl} alt={asset.name} className="w-full h-full object-cover" />
                         ) : (
-                          <Package className="w-12 h-12 text-slate-400" />
+                          <Package className="w-12 h-12 text-muted-foreground" />
                         )}
                       </div>
 
                       {/* Asset Info */}
                       <div className="space-y-2">
-                        <h3 className="font-bold text-slate-900 dark:text-white line-clamp-1">{asset.name}</h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{asset.serialNumber}</p>
+                        <h3 className="font-bold text-foreground line-clamp-1">{asset.name}</h3>
+                        <p className="text-xs text-muted-foreground">{asset.serialNumber}</p>
 
                         <div className="flex items-center gap-2 flex-wrap pt-2">
                           <Badge
                             variant="outline"
                             className={`text-xs font-semibold ${
                               asset.status === 'IN_OPERATION'
-                                ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
-                                : 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                                ? 'bg-success/10 text-success border-success/20'
+                                : 'bg-warning/10 text-warning border-warning/20'
                             }`}
                           >
                             {asset.status?.replace('_', ' ')}
                           </Badge>
                           {asset.lastVerifiedDate ? (
-                            <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                            <div className="flex items-center gap-1 text-xs text-success">
                               <CheckCircle2 className="w-3 h-3" />
                               Verified
                             </div>
                           ) : (
-                            <div className="flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400">
+                            <div className="flex items-center gap-1 text-xs text-warning">
                               <Clock className="w-3 h-3" />
                               Pending
                             </div>
                           )}
                         </div>
 
-                        <div className="text-xs text-slate-600 dark:text-slate-400 pt-2 space-y-1">
+                        <div className="text-xs text-muted-foreground pt-2 space-y-1">
                           {asset.location && <p>📍 {asset.location}</p>}
                           {asset.department && <p>🏢 {asset.department}</p>}
                         </div>
@@ -380,8 +380,8 @@ export default function AdminAssetVerification() {
                         onClick={() => setCurrentPage(index + 1)}
                         className={`w-8 h-8 rounded-md text-sm font-semibold transition-colors ${
                           currentPage === index + 1
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
                         }`}
                       >
                         {index + 1}
@@ -407,9 +407,9 @@ export default function AdminAssetVerification() {
           {/* Empty State */}
           {!isSearching && filteredAssets.length === 0 && (
             <div className="text-center py-12">
-              <AlertCircle className="w-12 h-12 text-slate-400 mx-auto mb-3" />
-              <p className="text-slate-600 dark:text-slate-400 font-medium">No assets found</p>
-              <p className="text-sm text-slate-500 dark:text-slate-500 mt-1">Try adjusting your search criteria</p>
+              <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground font-medium">No assets found</p>
+              <p className="text-sm text-muted-foreground/70 mt-1">Try adjusting your search criteria</p>
             </div>
           )}
 
@@ -430,9 +430,9 @@ export default function AdminAssetVerification() {
     const isAlreadyVerified = !!selectedAsset.lastVerifiedDate;
 
     return (
-      <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col">
+      <div className="min-h-screen bg-background flex flex-col">
         {/* Hero Image Section */}
-        <div className="relative h-80 bg-slate-800 flex items-center justify-center overflow-hidden">
+        <div className="relative h-80 bg-secondary flex items-center justify-center overflow-hidden">
           {selectedAsset.imageUrl ? (
             <>
               <img
@@ -440,12 +440,12 @@ export default function AdminAssetVerification() {
                 alt={selectedAsset.name}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
             </>
           ) : (
             <>
-              <Package className="text-slate-500 w-24 h-24" />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 to-transparent"></div>
+              <Package className="text-muted-foreground w-24 h-24" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent"></div>
             </>
           )}
 
@@ -467,78 +467,78 @@ export default function AdminAssetVerification() {
                 variant="outline"
                 className={`text-xs font-bold uppercase tracking-wider ${
                   selectedAsset.status === 'IN_OPERATION'
-                    ? 'bg-emerald-500/20 text-emerald-200 border-emerald-500/30'
-                    : 'bg-amber-500/20 text-amber-200 border-amber-500/30'
+                    ? 'bg-success/10 text-success border-success/20'
+                    : 'bg-warning/10 text-warning border-warning/20'
                 }`}
               >
                 {selectedAsset.status?.replace('_', ' ')}
               </Badge>
               {isAlreadyVerified && (
-                <Badge className="bg-green-500/20 text-green-200 border-green-500/30 text-xs font-bold">
+                <Badge className="bg-success/10 text-success border-success/20 text-xs font-bold">
                   ✓ VERIFIED
                 </Badge>
               )}
             </div>
             <h2 className="text-3xl font-bold leading-tight mb-1">{selectedAsset.name}</h2>
-            <p className="text-slate-300 font-mono text-sm">{selectedAsset.id}</p>
+            <p className="text-muted-foreground font-mono text-sm">{selectedAsset.id}</p>
           </div>
         </div>
 
         {/* Info Section */}
-        <div className="flex-1 p-6 -mt-6 bg-white dark:bg-slate-950 rounded-t-3xl relative z-10 flex flex-col shadow-[0_-10px_40px_rgba(0,0,0,0.2)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+        <div className="flex-1 p-6 -mt-6 bg-card rounded-t-3xl relative z-10 flex flex-col shadow-lg">
           <div className="space-y-6 mb-8">
             {/* Asset Details Grid */}
             <div className="grid grid-cols-2 gap-4">
-              <Card className="bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+              <Card className="bg-muted">
                 <CardContent className="pt-4">
-                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Serial</p>
-                  <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{selectedAsset.serialNumber}</p>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Serial</p>
+                  <p className="font-semibold text-foreground truncate">{selectedAsset.serialNumber}</p>
                 </CardContent>
               </Card>
 
-              <Card className="bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+              <Card className="bg-muted">
                 <CardContent className="pt-4">
-                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Category</p>
-                  <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{selectedAsset.category}</p>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Category</p>
+                  <p className="font-semibold text-foreground truncate">{selectedAsset.category}</p>
                 </CardContent>
               </Card>
 
-              <Card className="bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+              <Card className="bg-muted">
                 <CardContent className="pt-4">
-                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Location</p>
-                  <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{selectedAsset.location || 'N/A'}</p>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Location</p>
+                  <p className="font-semibold text-foreground truncate">{selectedAsset.location || 'N/A'}</p>
                 </CardContent>
               </Card>
 
-              <Card className="bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+              <Card className="bg-muted">
                 <CardContent className="pt-4">
-                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Department</p>
-                  <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{selectedAsset.department || 'N/A'}</p>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Department</p>
+                  <p className="font-semibold text-foreground truncate">{selectedAsset.department || 'N/A'}</p>
                 </CardContent>
               </Card>
 
-              <Card className="bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+              <Card className="bg-muted">
                 <CardContent className="pt-4">
-                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Created</p>
-                  <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Created</p>
+                  <p className="font-semibold text-foreground truncate">
                     {selectedAsset.createdAt ? new Date(selectedAsset.createdAt).toLocaleDateString() : 'N/A'}
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className={`border-slate-200 dark:border-slate-700 ${
+              <Card className={`${
                 isAlreadyVerified 
-                  ? 'bg-green-50 dark:bg-green-900/20' 
-                  : 'bg-orange-50 dark:bg-orange-900/20'
+                  ? 'bg-success/10 border-success/20' 
+                  : 'bg-warning/10 border-warning/20'
               }`}>
                 <CardContent className="pt-4">
-                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">
                     {isAlreadyVerified ? 'Last Verified' : 'Verification Status'}
                   </p>
                   <p className={`font-semibold truncate ${
                     isAlreadyVerified
-                      ? 'text-green-700 dark:text-green-300'
-                      : 'text-orange-700 dark:text-orange-300'
+                      ? 'text-success'
+                      : 'text-warning'
                   }`}>
                     {isAlreadyVerified 
                       ? new Date(selectedAsset.lastVerifiedDate!).toLocaleDateString()
@@ -563,7 +563,7 @@ export default function AdminAssetVerification() {
           <Button
             onClick={handleVerify}
             disabled={isVerifying}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white py-6 text-base font-semibold rounded-lg flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 text-base font-semibold rounded-lg flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isVerifying ? (
               <>
