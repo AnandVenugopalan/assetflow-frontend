@@ -24,6 +24,7 @@ import Requests from "./pages/Requests";
 import NewRequest from "./pages/NewRequest";
 import Allocation from "./pages/Allocation";
 import Login from "./pages/Login";
+import OAuthCallback from "./pages/OAuthCallback";
 import AddAsset from "./pages/AddAsset";
 import AssetDetail from "./pages/AssetDetail";
 import AddITAsset from "./pages/AddITAsset";
@@ -51,6 +52,7 @@ const App = () => (
           <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <Routes>
               <Route path="/login" element={<Login />} />
+              <Route path="/auth/callback" element={<OAuthCallback />} />
               <Route path="/" element={<Navigate to="/login" replace />} />
               
               <Route path="/dashboard" element={<ProtectedRoute><AppLayout><Dashboard /></AppLayout></ProtectedRoute>} />

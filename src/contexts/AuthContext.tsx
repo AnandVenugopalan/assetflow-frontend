@@ -15,7 +15,9 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  setAuthFromOAuth: (token: string, user: User) => void;
   isLoading: boolean;
+  isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,14 +39,40 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Verify token on app load
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
+    const verifyToken = async () => {
+      const storedToken = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
+      
+      if (storedToken && storedUser) {
+        try {
+          setToken(storedToken);
+          setUser(JSON.parse(storedUser));
+          
+          // Verify token is valid with backend
+          const response = await api.get('/auth/me', {
+            headers: {
+              'Authorization': `Bearer ${storedToken}`,
+            },
+          });
+          
+          if (response.data) {
+            setUser(response.data);
+          }
+        } catch (error) {
+          console.error('Token verification failed:', error);
+          // Clear invalid token
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setToken(null);
+          setUser(null);
+        }
+      }
+      setIsLoading(false);
+    };
+
+    verifyToken();
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -73,6 +101,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const setAuthFromOAuth = (oauthToken: string, oauthUser: User) => {
+    setUser(oauthUser);
+    setToken(oauthToken);
+    localStorage.setItem('token', oauthToken);
+    localStorage.setItem('user', JSON.stringify(oauthUser));
+  };
+
   const logout = async () => {
     try {
       // Call logout API endpoint
@@ -95,7 +130,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     register,
     logout,
+    setAuthFromOAuth,
     isLoading,
+    isAuthenticated: !!token && !!user,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

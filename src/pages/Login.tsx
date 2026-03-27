@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function Login() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login, register } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isRegister, setIsRegister] = useState(false);
@@ -24,6 +25,12 @@ export default function Login() {
   const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
+
+  // Check for OAuth errors
+  const oauthError = searchParams.get("error");
+  if (oauthError && !error) {
+    setError(`OAuth login failed: ${oauthError}`);
+  }
 
   // ✅ LOGIN HANDLER
   const handleLogin = async (e: React.FormEvent) => {
@@ -274,6 +281,7 @@ export default function Login() {
                 if (googleUrl) {
                   window.location.href = googleUrl;
                 } else {
+                  setError("Google OAuth not configured");
                   toast.error("Google OAuth not configured");
                 }
               }}
@@ -293,6 +301,7 @@ export default function Login() {
                 if (microsoftUrl) {
                   window.location.href = microsoftUrl;
                 } else {
+                  setError("Microsoft OAuth not configured");
                   toast.error("Microsoft OAuth not configured");
                 }
               }}
