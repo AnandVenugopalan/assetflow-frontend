@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Package, Mail, Lock, Eye, EyeOff, Package2, Zap, Shield, TrendingUp } from "lucide-react";
+import { Package, Mail, Lock, Eye, EyeOff, Package2, Zap, Shield, TrendingUp, AlertCircle, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -21,16 +21,25 @@ export default function Login() {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
 
-  // ✅ Signup state
+  // ✅ SIGNUP state
   const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
 
-  // Check for OAuth errors
-  const oauthError = searchParams.get("error");
-  if (oauthError && !error) {
-    setError(`OAuth login failed: ${oauthError}`);
-  }
+  // ✅ Check for OAuth errors on mount
+  useEffect(() => {
+    const oauthError = searchParams.get("error");
+    if (oauthError) {
+      setError(`${oauthError}`);
+      
+      // Auto-clear error after 5 seconds
+      const timer = setTimeout(() => {
+        setError("");
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams]);
 
   // ✅ LOGIN HANDLER
   const handleLogin = async (e: React.FormEvent) => {
@@ -176,7 +185,18 @@ export default function Login() {
           {/* Error Alert */}
           {error && (
             <Alert className="border-destructive/50 bg-destructive/10 animate-in slide-in-from-top-2">
-              <AlertDescription className="text-destructive">{error}</AlertDescription>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+                  <AlertDescription className="text-destructive text-sm">{error}</AlertDescription>
+                </div>
+                <button
+                  onClick={() => setError("")}
+                  className="text-destructive hover:text-destructive/70 transition-colors flex-shrink-0"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             </Alert>
           )}
 
@@ -193,7 +213,10 @@ export default function Login() {
                   className="h-11 rounded-lg bg-muted/50 border-border/50 pl-4 placeholder:text-muted-foreground/60 focus:border-primary/50 transition-colors"
                   required
                   value={signupName}
-                  onChange={(e) => setSignupName(e.target.value)}
+                  onChange={(e) => {
+                    setSignupName(e.target.value);
+                    if (error) setError("");
+                  }}
                 />
               </div>
             )}
@@ -210,7 +233,14 @@ export default function Login() {
                   className="h-11 rounded-lg bg-muted/50 border-border/50 pl-11 placeholder:text-muted-foreground/60 focus:border-primary/50 transition-colors"
                   required
                   value={isRegister ? signupEmail : loginEmail}
-                  onChange={(e) => isRegister ? setSignupEmail(e.target.value) : setLoginEmail(e.target.value)}
+                  onChange={(e) => {
+                    if (isRegister) {
+                      setSignupEmail(e.target.value);
+                    } else {
+                      setLoginEmail(e.target.value);
+                    }
+                    if (error) setError("");
+                  }}
                   autoComplete="email"
                 />
               </div>
@@ -233,7 +263,14 @@ export default function Login() {
                   className="h-11 rounded-lg bg-muted/50 border-border/50 pl-11 pr-11 placeholder:text-muted-foreground/60 focus:border-primary/50 transition-colors"
                   required
                   value={isRegister ? signupPassword : loginPassword}
-                  onChange={(e) => isRegister ? setSignupPassword(e.target.value) : setLoginPassword(e.target.value)}
+                  onChange={(e) => {
+                    if (isRegister) {
+                      setSignupPassword(e.target.value);
+                    } else {
+                      setLoginPassword(e.target.value);
+                    }
+                    if (error) setError("");
+                  }}
                   autoComplete={isRegister ? "new-password" : "current-password"}
                 />
                 <button
@@ -277,6 +314,7 @@ export default function Login() {
             <button
               type="button"
               onClick={() => {
+                setError("");
                 const googleUrl = import.meta.env.VITE_GOOGLE_OAUTH_URL;
                 if (googleUrl) {
                   window.location.href = googleUrl;
@@ -297,6 +335,7 @@ export default function Login() {
             <button
               type="button"
               onClick={() => {
+                setError("");
                 const microsoftUrl = import.meta.env.VITE_MICROSOFT_OAUTH_URL;
                 if (microsoftUrl) {
                   window.location.href = microsoftUrl;
