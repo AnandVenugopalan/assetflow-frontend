@@ -234,12 +234,27 @@ export default function NewAllocation() {
                 </div>
                 <div className="space-y-2">
                   <Label>Location *</Label>
-                  <Input
-                    placeholder="e.g. Kochi Office"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    required
-                  />
+                  <Select value={location} onValueChange={setLocation} required>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select district" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Thiruvananthapuram">Thiruvananthapuram</SelectItem>
+                      <SelectItem value="Kollam">Kollam</SelectItem>
+                      <SelectItem value="Pathanamthitta">Pathanamthitta</SelectItem>
+                      <SelectItem value="Alappuzha">Alappuzha</SelectItem>
+                      <SelectItem value="Kottayam">Kottayam</SelectItem>
+                      <SelectItem value="Idukki">Idukki</SelectItem>
+                      <SelectItem value="Ernakulam">Ernakulam</SelectItem>
+                      <SelectItem value="Thrissur">Thrissur</SelectItem>
+                      <SelectItem value="Palakkad">Palakkad</SelectItem>
+                      <SelectItem value="Malappuram">Malappuram</SelectItem>
+                      <SelectItem value="Kozhikode">Kozhikode</SelectItem>
+                      <SelectItem value="Wayanad">Wayanad</SelectItem>
+                      <SelectItem value="Kannur">Kannur</SelectItem>
+                      <SelectItem value="Kasaragod">Kasaragod</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
