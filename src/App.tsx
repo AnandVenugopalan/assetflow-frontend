@@ -8,6 +8,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppLayout } from "./components/layout/AppLayout";
 import Dashboard from "./pages/Dashboard";
+import BIDashboard from "./pages/BIDashboard";
 import Assets from "./pages/Assets";
 import Procurement from "./pages/Procurement";
 import Maintenance from "./pages/Maintenance";
@@ -56,6 +57,7 @@ const App = () => (
               <Route path="/" element={<Navigate to="/login" replace />} />
               
               <Route path="/dashboard" element={<ProtectedRoute><AppLayout><Dashboard /></AppLayout></ProtectedRoute>} />
+              <Route path="/bi-dashboard" element={<ProtectedRoute><AppLayout><BIDashboard /></AppLayout></ProtectedRoute>} />
               
               <Route path="/assets" element={<ProtectedRoute><AppLayout><Assets /></AppLayout></ProtectedRoute>} />
               <Route path="/assets/add" element={<ProtectedRoute><AppLayout><AddAsset /></AppLayout></ProtectedRoute>} />
