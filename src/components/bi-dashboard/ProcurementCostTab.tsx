@@ -1,7 +1,5 @@
+import { useState, useEffect } from "react";
 import {
-  PieChart,
-  Pie,
-  Cell,
   BarChart,
   Bar,
   XAxis,
@@ -10,10 +8,8 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  ComposedChart,
+  LineChart,
   Line,
-  ScatterChart,
-  Scatter,
 } from "recharts";
 import { KPIBox } from "./KPIBox";
 import { ChartContainer } from "./ChartContainer";
@@ -21,238 +17,255 @@ import {
   DollarSign,
   ShoppingCart,
   TrendingUp,
-  Package,
+  Clock,
   CheckCircle,
+  AlertCircle,
+  Lightbulb,
 } from "lucide-react";
-import {
-  procurementKPIs,
-  procurementRequestStatus,
-  monthlySpendTrend,
-  categoryWiseSpend,
-  vendorPerformance,
-  topPurchasedCategories,
-} from "@/lib/biDashboardData";
+import { fetchProcurementCostData, ProcurementCostResponse } from "@/lib/dashboardApi";
+import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function ProcurementCostTab() {
+  const [data, setData] = useState<ProcurementCostResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetchProcurementCostData();
+        setData(response);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "Failed to load data";
+        setError(errorMessage);
+        toast.error(errorMessage);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-5">
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} className="h-40 rounded-2xl" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {[...Array(6)].map((_, i) => (
+            <Skeleton key={i} className="h-80 rounded-2xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-2xl bg-red-50 p-12">
+        <AlertCircle className="h-12 w-12 text-red-600 mb-4" />
+        <h3 className="text-lg font-semibold text-red-900 mb-2">Error Loading Data</h3>
+        <p className="text-red-700 mb-4">{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="flex items-center justify-center rounded-2xl bg-gray-50 p-12">
+        <p className="text-gray-600">No data available</p>
+      </div>
+    );
+  }
   return (
     <div className="space-y-8">
       {/* KPI Cards */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-5">
         <KPIBox
           title="Total Spend"
-          value={`$${(procurementKPIs.totalSpend / 1000).toFixed(0)}k`}
+          value={`$${(data.metrics.totalSpend / 1000).toFixed(0)}k`}
           icon={DollarSign}
           color="text-green-600"
           bgColor="bg-green-50"
-          change="+12%"
+          change={data.metrics.totalSpendChangePercent}
           index={0}
         />
         <KPIBox
           title="Total Requests"
-          value={procurementKPIs.totalRequests}
+          value={data.metrics.totalRequests}
           icon={ShoppingCart}
           color="text-blue-600"
           bgColor="bg-blue-50"
-          change="+8%"
+          change={data.metrics.totalRequestsChangePercent}
           index={1}
         />
         <KPIBox
-          title="Approval Rate"
-          value={`${procurementKPIs.approvalRate}%`}
+          title="Closure Rate"
+          value={`${data.metrics.closureRate.toFixed(1)}%`}
           icon={CheckCircle}
           color="text-emerald-600"
           bgColor="bg-emerald-50"
-          change="+2.5%"
+          change={data.metrics.closureRateChangePercent}
           index={2}
         />
         <KPIBox
-          title="Avg Request Value"
-          value={`$${procurementKPIs.avgRequestValue.toFixed(0)}`}
-          icon={Package}
-          color="text-purple-600"
-          bgColor="bg-purple-50"
-          change="+4%"
+          title="Pending Requests"
+          value={data.metrics.pendingRequests}
+          icon={Clock}
+          color="text-orange-600"
+          bgColor="bg-orange-50"
+          change={data.metrics.pendingRequestsChangePercent}
           index={3}
         />
         <KPIBox
-          title="Pending Requests"
-          value={procurementKPIs.pendingRequests}
+          title="Avg Request Value"
+          value={`$${(data.metrics.avgRequestValue / 1000).toFixed(0)}k`}
           icon={TrendingUp}
-          color="text-amber-600"
-          bgColor="bg-amber-50"
-          change="-6%"
+          color="text-purple-600"
+          bgColor="bg-purple-50"
+          change={data.metrics.avgRequestValueChangePercent}
           index={4}
         />
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      {/* Top Row - 3 Charts */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Procurement Request Status */}
         <ChartContainer
           title="Procurement Request Status"
-          subtitle="Current status of all requests"
+          subtitle="Breakdown of request statuses"
           index={0}
         >
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={procurementRequestStatus}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, value }) => `${name}: ${value}`}
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {procurementRequestStatus.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.fill} />
-                ))}
-              </Pie>
-              <Tooltip formatter={(value) => `${value} requests`} />
-            </PieChart>
-          </ResponsiveContainer>
-        </ChartContainer>
-
-        {/* Monthly Spend Trend */}
-        <ChartContainer
-          title="Monthly Spend Trend"
-          subtitle="Spend and request volume over time"
-          index={1}
-        >
-          <ResponsiveContainer width="100%" height={300}>
-            <ComposedChart data={monthlySpendTrend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-              <YAxis
-                yAxisId="left"
-                tick={{ fontSize: 12 }}
-                label={{ value: "Spend ($)", angle: -90, position: "insideLeft" }}
-              />
-              <YAxis
-                yAxisId="right"
-                orientation="right"
-                tick={{ fontSize: 12 }}
-                label={{ value: "Requests", angle: 90, position: "insideRight" }}
-              />
-              <Tooltip contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }} />
-              <Legend />
-              <Bar yAxisId="left" dataKey="spend" fill="#10b981" radius={[8, 8, 0, 0]} />
-              <Line yAxisId="right" type="monotone" dataKey="requests" stroke="#3b82f6" strokeWidth={2} />
-            </ComposedChart>
-          </ResponsiveContainer>
-        </ChartContainer>
-
-        {/* Category-wise Spend */}
-        <ChartContainer
-          title="Category-wise Spend"
-          subtitle="Procurement spending by category"
-          index={2}
-        >
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={280}>
             <BarChart
-              data={categoryWiseSpend}
-              layout="vertical"
-              margin={{ left: 150 }}
+              data={data.requestStatusDistribution.map((item) => ({
+                name: item.status,
+                value: item.count,
+              }))}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis type="number" tick={{ fontSize: 12 }} />
-              <YAxis dataKey="category" type="category" tick={{ fontSize: 12 }} />
+              <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }} />
+              <Bar dataKey="value" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartContainer>
+
+        {/* Monthly Procurement Spend Trend */}
+        <ChartContainer
+          title="Monthly Procurement Spend Trend"
+          subtitle="Spend trends over months"
+          index={1}
+        >
+          <ResponsiveContainer width="100%" height={280}>
+            <LineChart data={data.monthlySpendTrend}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 12 }} />
               <Tooltip
                 contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
                 formatter={(value) => `$${value}`}
               />
-              <Bar dataKey="spend" fill="#f59e0b" radius={[0, 8, 8, 0]} />
-            </BarChart>
+              <Line
+                type="monotone"
+                dataKey="spend"
+                stroke="#06b6d4"
+                strokeWidth={2}
+                dot={{ fill: "#06b6d4", r: 4 }}
+              />
+            </LineChart>
           </ResponsiveContainer>
         </ChartContainer>
 
-        {/* Vendor Performance */}
+        {/* Department-wise Spend */}
         <ChartContainer
-          title="Vendor Performance"
-          subtitle="Cost vs Rating analysis"
-          index={3}
+          title="Department-wise Spend"
+          subtitle="Spending by department"
+          index={2}
         >
-          <ResponsiveContainer width="100%" height={300}>
-            <ScatterChart
-              margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
-              data={vendorPerformance}
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart
+              data={data.departmentWiseSpend}
+              layout="vertical"
+              margin={{ top: 5, right: 30, left: 150, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis type="number" dataKey="cost" name="Cost ($)" tick={{ fontSize: 12 }} />
-              <YAxis
-                type="number"
-                dataKey="rating"
-                name="Rating"
-                domain={[3, 5]}
-                tick={{ fontSize: 12 }}
-              />
-              <Tooltip
-                contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
-                cursor={{ strokeDasharray: "3 3" }}
-              />
-              <Scatter
-                name="Vendors"
-                data={vendorPerformance}
-                fill="#8b5cf6"
-              />
-            </ScatterChart>
+              <XAxis type="number" tick={{ fontSize: 12 }} />
+              <YAxis dataKey="department" type="category" tick={{ fontSize: 11 }} width={140} />
+              <Tooltip contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }} />
+              <Bar dataKey="spend" fill="#10b981" radius={[0, 8, 8, 0]} />
+            </BarChart>
           </ResponsiveContainer>
         </ChartContainer>
+      </div>
 
-        {/* Top Purchased Categories */}
+      {/* Bottom Row - 3 Charts */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Category-wise Procurement Spend */}
         <ChartContainer
-          title="Top Purchased Categories"
-          subtitle="Most frequently purchased items"
-          index={4}
+          title="Category-wise Procurement Spend"
+          subtitle="Spending by category"
+          index={3}
         >
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={topPurchasedCategories}>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={data.categoryWiseSpend}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="category" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" />
+              <XAxis dataKey="category" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 12 }} />
               <Tooltip contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }} />
-              <Bar dataKey="purchases" fill="#06b6d4" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="spend" fill="#f59e0b" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartContainer>
 
-        {/* Vendor List */}
+        {/* Pending Pipeline Value by Stage */}
         <ChartContainer
-          title="Vendor Summary"
-          subtitle="Top vendors and their metrics"
+          title="Pending Pipeline Value by Stage"
+          subtitle="Value at each procurement stage"
+          index={4}
+        >
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={data.pendingPipelineValueByStage}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="stage" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }} />
+              <Bar dataKey="value" fill="#8b5cf6" radius={[8, 8, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartContainer>
+
+        {/* Gap Coverage Notes */}
+        <ChartContainer
+          title="Gap Coverage Notes"
+          subtitle="Key observations and actions"
           index={5}
         >
-          <div className="space-y-3">
-            {vendorPerformance.map((vendor, idx) => (
-              <div key={idx} className="flex items-center gap-4 p-3 rounded-lg bg-gray-50">
-                <div className="flex-1">
-                  <h4 className="text-sm font-semibold text-gray-900">
-                    {vendor.vendor}
-                  </h4>
-                  <p className="text-xs text-gray-600">Cost: ${vendor.cost.toLocaleString()}</p>
+          <div className="p-6 space-y-4">
+            {data.gapCoverageNotes.length > 0 ? (
+              data.gapCoverageNotes.map((item, idx) => (
+                <div key={idx} className="flex gap-3">
+                  <Lightbulb className="h-5 w-5 text-amber-500 flex-shrink-0 mt-1" />
+                  <p className="text-sm text-gray-700">{item.note}</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex">
-                    {[...Array(5)].map((_, i) => (
-                      <span
-                        key={i}
-                        className={`text-lg ${
-                          i < Math.floor(vendor.rating)
-                            ? "text-yellow-400"
-                            : "text-gray-300"
-                        }`}
-                      >
-                        ★
-                      </span>
-                    ))}
-                  </div>
-                  <span className="text-sm font-semibold text-gray-900">
-                    {vendor.rating}
-                  </span>
-                </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-sm text-gray-500">No notes available</p>
+            )}
           </div>
         </ChartContainer>
       </div>
