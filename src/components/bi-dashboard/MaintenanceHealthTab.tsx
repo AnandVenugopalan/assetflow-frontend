@@ -220,11 +220,11 @@ export function MaintenanceHealthTab() {
             <BarChart
               data={data.maintenanceCostPerAsset}
               layout="vertical"
-              margin={{ top: 5, right: 30, left: 150, bottom: 5 }}
+              margin={{ top: 10, right: 150, left: 10, bottom: 10 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis type="number" tick={{ fontSize: 12 }} />
-              <YAxis dataKey="assetName" type="category" tick={{ fontSize: 11 }} width={140} />
+              <YAxis dataKey="assetName" type="category" tick={{ fontSize: 11 }} width={100} />
               <Tooltip contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }} />
               <Bar dataKey="cost" fill="#8b5cf6" radius={[0, 8, 8, 0]} />
             </BarChart>
