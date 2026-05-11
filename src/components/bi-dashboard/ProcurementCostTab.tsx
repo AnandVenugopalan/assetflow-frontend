@@ -21,15 +21,25 @@ import {
   CheckCircle,
   AlertCircle,
   Lightbulb,
+  ArrowLeft,
 } from "lucide-react";
-import { fetchProcurementCostData, ProcurementCostResponse } from "@/lib/dashboardApi";
+import { fetchProcurementCostData, ProcurementCostResponse, CategoryWiseSpendItem } from "@/lib/dashboardApi";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+
+interface DrilldownState {
+  isActive: boolean;
+  selectedCategory: CategoryWiseSpendItem | null;
+}
 
 export function ProcurementCostTab() {
   const [data, setData] = useState<ProcurementCostResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [drilldownState, setDrilldownState] = useState<DrilldownState>({
+    isActive: false,
+    selectedCategory: null,
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -49,6 +59,20 @@ export function ProcurementCostTab() {
 
     fetchData();
   }, []);
+
+  const handleCategoryClick = (categoryData: CategoryWiseSpendItem) => {
+    setDrilldownState({
+      isActive: true,
+      selectedCategory: categoryData,
+    });
+  };
+
+  const handleBackToDrill = () => {
+    setDrilldownState({
+      isActive: false,
+      selectedCategory: null,
+    });
+  };
 
   if (loading) {
     return (
@@ -215,21 +239,91 @@ export function ProcurementCostTab() {
 
       {/* Bottom Row - 3 Charts */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Category-wise Procurement Spend */}
+        {/* Category-wise Procurement Spend with Drill-down */}
         <ChartContainer
-          title="Category-wise Procurement Spend"
-          subtitle="Spending by category"
+          title={drilldownState.isActive ? `Asset Types - ${drilldownState.selectedCategory?.categoryLabel}` : "Category-wise Procurement Spend"}
+          subtitle={drilldownState.isActive ? "Click a bar to see asset type details" : "Click a category to drill down"}
           index={3}
         >
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={data.categoryWiseSpend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="category" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }} />
-              <Bar dataKey="spend" fill="#f59e0b" radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="space-y-4">
+            {drilldownState.isActive && drilldownState.selectedCategory ? (
+              <>
+                <button
+                  onClick={handleBackToDrill}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Categories
+                </button>
+                <ResponsiveContainer width="100%" height={240}>
+                  <BarChart data={drilldownState.selectedCategory.assetTypes}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis 
+                      dataKey="assetType" 
+                      tick={{ fontSize: 10 }} 
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                    />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
+                      formatter={(value: number) => [`$${value.toLocaleString()}`, 'Spend']}
+                      labelFormatter={(label) => `${label}`}
+                    />
+                    <Bar dataKey="spend" fill="#06b6d4" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+                <div className="text-xs text-gray-600 border-t pt-3">
+                  <p className="font-semibold mb-2">Summary:</p>
+                  <p>Total Spend: <span className="font-bold text-gray-900">${drilldownState.selectedCategory.spend.toLocaleString()}</span></p>
+                  <p>Asset Types: <span className="font-bold text-gray-900">{drilldownState.selectedCategory.assetTypes.length}</span></p>
+                  <p>Total Items: <span className="font-bold text-gray-900">{drilldownState.selectedCategory.assetTypes.reduce((sum, item) => sum + item.count, 0)}</span></p>
+                </div>
+              </>
+            ) : (
+              <>
+                <ResponsiveContainer width="100%" height={240}>
+                  <BarChart 
+                    data={data.categoryWiseSpend.map(item => ({
+                      category: item.categoryLabel,
+                      spend: item.spend,
+                      originalData: item
+                    }))}
+                    onClick={(state) => {
+                      if (state?.activeTooltipIndex !== undefined) {
+                        const selectedData = data.categoryWiseSpend[state.activeTooltipIndex];
+                        handleCategoryClick(selectedData);
+                      }
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="category" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Tooltip contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }} />
+                    <Bar dataKey="spend" fill="#f59e0b" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+                <div className="text-xs text-gray-600 border-t pt-3 space-y-2">
+                  {data.categoryWiseSpend.map((cat) => (
+                    <button
+                      key={cat.category}
+                      onClick={() => handleCategoryClick(cat)}
+                      className="w-full text-left p-2 rounded hover:bg-amber-50 transition-colors hover:cursor-pointer"
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold text-gray-900">{cat.categoryLabel}</span>
+                        <span className="text-amber-600">${cat.spend.toLocaleString()}</span>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {cat.assetTypes.length} asset types • {cat.assetTypes.reduce((sum, item) => sum + item.count, 0)} items
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </ChartContainer>
 
         {/* Pending Pipeline Value by Stage */}

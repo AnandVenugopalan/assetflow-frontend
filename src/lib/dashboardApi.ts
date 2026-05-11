@@ -165,7 +165,22 @@ export interface MonthlySpendItem {
 
 export interface CategoryWiseSpendItem {
   category: string;
+  categoryLabel: string;
   spend: number;
+  assetTypes: AssetTypeSpendItem[];
+}
+
+export interface AssetTypeSpendItem {
+  assetType: string;
+  spend: number;
+  count: number;
+}
+
+export interface CategoryWithDrilldownItem {
+  category: string;
+  categoryLabel: string;
+  spend: number;
+  assetTypes: AssetTypeSpendItem[];
 }
 
 export interface VendorPerformanceItem {

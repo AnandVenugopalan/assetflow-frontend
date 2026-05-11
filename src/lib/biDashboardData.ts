@@ -132,11 +132,51 @@ export const monthlySpendTrend = [
 ];
 
 export const categoryWiseSpend = [
-  { category: "IT Equipment", spend: 285000 },
-  { category: "Furniture & Fixtures", spend: 195600 },
-  { category: "Office Supplies", spend: 142500 },
-  { category: "Vehicles", spend: 125800 },
-  { category: "Machinery", spend: 98520 },
+  { category: "it-assets", spend: 285000 },
+  { category: "movable-assets", spend: 195600 },
+  { category: "immovable-assets", spend: 142500 },
+];
+
+export const categoryWiseSpendWithDrilldown = [
+  {
+    category: "it-assets",
+    categoryLabel: "IT Assets",
+    spend: 285000,
+    assetTypes: [
+      { assetType: "Laptop", spend: 95000, count: 45 },
+      { assetType: "Desktop", spend: 72000, count: 30 },
+      { assetType: "Server", spend: 58000, count: 8 },
+      { assetType: "Printer", spend: 32000, count: 16 },
+      { assetType: "Monitor", spend: 18000, count: 36 },
+      { assetType: "Router", spend: 8000, count: 4 },
+      { assetType: "Network Switch", spend: 2000, count: 2 },
+    ],
+  },
+  {
+    category: "movable-assets",
+    categoryLabel: "Movable Assets",
+    spend: 195600,
+    assetTypes: [
+      { assetType: "Office Furniture", spend: 85000, count: 120 },
+      { assetType: "Appliances", spend: 48000, count: 18 },
+      { assetType: "Transport Equipment", spend: 35000, count: 5 },
+      { assetType: "Tools & Machinery", spend: 22000, count: 45 },
+      { assetType: "Audio Visual Equipment", spend: 5600, count: 8 },
+    ],
+  },
+  {
+    category: "immovable-assets",
+    categoryLabel: "Immovable Assets",
+    spend: 142500,
+    assetTypes: [
+      { assetType: "Building", spend: 75000, count: 2 },
+      { assetType: "Office Space", spend: 35000, count: 8 },
+      { assetType: "Electrical Installations", spend: 18000, count: 12 },
+      { assetType: "CCTV System", spend: 8500, count: 5 },
+      { assetType: "Fire Safety System", spend: 4000, count: 2 },
+      { assetType: "Solar Panels", spend: 2000, count: 1 },
+    ],
+  },
 ];
 
 export const vendorPerformance = [
