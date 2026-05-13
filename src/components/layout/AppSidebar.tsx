@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Package, ShoppingCart, Users, Wrench, Laptop, Building2, TrendingDown, Trash2, FileText, Bell, Settings, LogOut, PlaySquare, CheckSquare, Search, DollarSign, QrCode } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Users, Wrench, Laptop, Building2, TrendingDown, Trash2, FileText, Bell, Settings, LogOut, PlaySquare, CheckSquare, Search, DollarSign, QrCode, BarChart3 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -21,6 +21,7 @@ import { toast } from "sonner";
 // RBAC access matrix
 const ACCESS_MATRIX = {
   "Dashboard": ["ADMIN", "MANAGER", "USER"],
+  "BI Dashboard": ["ADMIN", "MANAGER"],
   "Asset Register": ["ADMIN", "MANAGER", "USER"],
   "Scan QR Code": ["ADMIN", "MANAGER", "USER"],
   "Generate QR Codes": ["ADMIN"],
@@ -42,6 +43,7 @@ const ACCESS_MATRIX = {
 
 const navigation = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "BI Dashboard", url: "/bi-dashboard", icon: BarChart3 },
   { title: "Asset Register", url: "/assets", icon: Package },
   { title: "Scan QR Code", url: "/scan-qr", icon: QrCode },
   { title: "Generate QR Codes", url: "/qr-codes/generate", icon: QrCode },
