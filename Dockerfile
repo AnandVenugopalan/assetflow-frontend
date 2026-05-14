@@ -7,8 +7,10 @@ WORKDIR /app
 # Copy package files
 COPY package.json package-lock.json ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies - skip postinstall scripts to avoid lovable-tagger/esbuild ETXTBSY on Alpine
+# lovable-tagger is a Lovable.dev-only devDependency not needed for vite production builds
+RUN npm ci --ignore-scripts && \
+    node node_modules/esbuild/install.js || true
 
 # Copy source code
 COPY . .
