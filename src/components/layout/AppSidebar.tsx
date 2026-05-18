@@ -97,7 +97,7 @@ export function AppSidebar() {
             <Package className="h-6 w-6 text-primary-foreground" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-sidebar-foreground">Asset Desk</h2>
+            <h2 className="text-lg font-bold text-sidebar-foreground">AssetNexus</h2>
             <p className="text-xs text-sidebar-foreground/70">Asset Management</p>
           </div>
         </div>

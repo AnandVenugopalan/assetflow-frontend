@@ -89,7 +89,7 @@ export default function Login() {
     }
   };
 
-  const companyName = import.meta.env.VITE_COMPANY_NAME || "AssetFlow";
+  const companyName = import.meta.env.VITE_COMPANY_NAME || "AssetNexus";
   const companyTagline = import.meta.env.VITE_COMPANY_TAGLINE || "Asset Lifecycle Management";
 
   return (
