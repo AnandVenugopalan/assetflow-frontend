@@ -26,6 +26,7 @@ import NewRequest from "./pages/NewRequest";
 import Allocation from "./pages/Allocation";
 import Login from "./pages/Login";
 import OAuthCallback from "./pages/OAuthCallback";
+import UserManagement from "./pages/UserManagement";
 import AddAsset from "./pages/AddAsset";
 import AssetDetail from "./pages/AssetDetail";
 import AddITAsset from "./pages/AddITAsset";
@@ -87,6 +88,7 @@ const App = () => (
               <Route path="/disposal/new" element={<ProtectedRoute><AppLayout><NewDisposalRequest /></AppLayout></ProtectedRoute>} />
               <Route path="/requests" element={<ProtectedRoute><AppLayout><Requests /></AppLayout></ProtectedRoute>} />
               <Route path="/requests/new" element={<ProtectedRoute><AppLayout><NewRequest /></AppLayout></ProtectedRoute>} />
+              <Route path="/users" element={<ProtectedRoute><AppLayout><UserManagement /></AppLayout></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><AppLayout><div className="flex h-96 items-center justify-center"><p className="text-xl text-muted-foreground">Notifications Module - Coming Soon</p></div></AppLayout></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><AppLayout><div className="flex h-96 items-center justify-center"><p className="text-xl text-muted-foreground">Settings Module - Coming Soon</p></div></AppLayout></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
