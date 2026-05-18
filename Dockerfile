@@ -9,7 +9,7 @@ COPY package.json package-lock.json ./
 
 # Install dependencies - skip postinstall scripts to avoid lovable-tagger/esbuild ETXTBSY on Alpine
 # lovable-tagger is a Lovable.dev-only devDependency not needed for vite production builds
-RUN npm ci --ignore-scripts && \
+RUN npm ci --ignore-scripts --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 && \
     node node_modules/esbuild/install.js || true
 
 # Copy source code
