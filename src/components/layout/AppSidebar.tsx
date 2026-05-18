@@ -39,6 +39,7 @@ const ACCESS_MATRIX = {
   "Disposal": ["ADMIN"],
   // "Requests": ["ADMIN", "MANAGER", "USER"],
   "My Assets": ["USER"],
+  "User Management": ["ADMIN"],
 };
 
 const navigation = [
@@ -61,6 +62,7 @@ const navigation = [
   // { title: "Depreciation", url: "/depreciation", icon: TrendingDown },
   { title: "Disposal", url: "/disposal", icon: Trash2 },
   // { title: "Requests", url: "/requests", icon: FileText },
+  { title: "User Management", url: "/users", icon: Users },
 ];
 
 
