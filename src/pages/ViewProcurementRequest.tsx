@@ -164,6 +164,38 @@ export default function ViewProcurementRequest() {
     }
   };
 
+  const handleMarkAsOrdered = async () => {
+    const poId = request?.purchaseOrders?.[0]?.id;
+    if (!poId) return toast({ variant: "destructive", title: "No PO found" });
+    
+    setActionLoading(true);
+    try {
+      await PurchaseOrdersApi.markAsOrdered(poId);
+      toast({ title: "Marked as Ordered!" });
+      fetchRequest();
+    } catch {
+      toast({ variant: "destructive", title: "Action failed" });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleMarkAsCompleted = async () => {
+    const poId = request?.purchaseOrders?.[0]?.id;
+    if (!poId) return toast({ variant: "destructive", title: "No PO found" });
+    
+    setActionLoading(true);
+    try {
+      await PurchaseOrdersApi.markAsCompleted(poId);
+      toast({ title: "Completed & Assets Auto-Generated!" });
+      fetchRequest();
+    } catch {
+      toast({ variant: "destructive", title: "Action failed" });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   if (loading) return <div className="p-8 text-center"><Loader2 className="animate-spin mx-auto" /></div>;
   if (!request) return <div className="p-8">Request not found</div>;
 
@@ -364,6 +396,34 @@ export default function ViewProcurementRequest() {
                     )}
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {isPurchaseHead && request.status === 'PO_GENERATED' && (
+            <Card className="md:col-span-3 border-indigo-200">
+              <CardHeader className="bg-indigo-50/50">
+                <CardTitle>Place Order</CardTitle>
+                <CardDescription>Confirm that you have officially sent the PO to the vendor.</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <Button onClick={handleMarkAsOrdered} disabled={actionLoading} className="bg-indigo-600">
+                  {actionLoading ? <Loader2 className="animate-spin" /> : "Mark as Ordered"}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {(isPurchaseHead || user?.role === 'ADMIN') && request.status === 'ORDERED' && (
+            <Card className="md:col-span-3 border-purple-200">
+              <CardHeader className="bg-purple-50/50">
+                <CardTitle>Acknowledge Delivery</CardTitle>
+                <CardDescription>Mark this procurement as completed. The system will automatically generate {request.quantity} tracking assets.</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <Button onClick={handleMarkAsCompleted} disabled={actionLoading} className="bg-purple-600">
+                  {actionLoading ? <Loader2 className="animate-spin" /> : <><CheckCircle className="mr-2 h-4 w-4" /> Mark completely Delivered & Generated Assets</>}
+                </Button>
               </CardContent>
             </Card>
           )}

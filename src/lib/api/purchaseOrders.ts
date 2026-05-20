@@ -30,5 +30,10 @@ export const PurchaseOrdersApi = {
   markAsOrdered: async (id: string) => {
     const res = await api.patch(`/purchase-orders/${id}/ordered`);
     return res.data;
+  },
+
+  markAsCompleted: async (id: string) => {
+    const res = await api.patch(`/purchase-orders/${id}/completed`);
+    return res.data;
   }
 };
