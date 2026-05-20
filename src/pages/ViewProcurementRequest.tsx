@@ -61,6 +61,40 @@ export default function ViewProcurementRequest() {
     if (id) fetchRequest();
   }, [id]);
 
+  const isDepartmentUser = user?.role === 'DEPARTMENT_USER' || user?.role === 'ADMIN';
+
+  const handleSubmitDraft = async () => {
+    setActionLoading(true);
+    try {
+      await ProcurementApi.submitDraft(id!);
+      toast({ title: "Draft submitted successfully" });
+      fetchRequest();
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Error submitting draft" });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const [clarificationResponse, setClarificationResponse] = useState("");
+
+  const handleSubmitClarification = async () => {
+    if (!clarificationResponse) {
+      toast({ variant: "destructive", title: "Clarification text is required" });
+      return;
+    }
+    setActionLoading(true);
+    try {
+      await ProcurementApi.submitClarification(id!, { clarificationResponse });
+      toast({ title: "Clarification submitted successfully" });
+      fetchRequest();
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Error submitting clarification" });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handlePurchaseReview = async (action: ProcurementReviewSchema['action']) => {
     if (action === 'FORWARD_TO_FINANCE' && (!vendorId || !estimatedCost || !expectedDeliveryDate)) {
       toast({ variant: "destructive", title: "Fill required fields before forwarding" });
@@ -149,6 +183,46 @@ export default function ViewProcurementRequest() {
           </div>
           <Badge className="text-sm px-4 py-1">{request.status.replace(/_/g, ' ')}</Badge>
         </div>
+
+        {/* Department User View - Draft & Clarification */}
+        {isDepartmentUser && request.status === 'DRAFT' && (
+          <Card className="bg-orange-50 border-orange-200">
+            <CardContent className="p-4 flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-orange-800">Draft Request</h3>
+                <p className="text-sm text-orange-600">This request is saved as a draft and has not been sent to the purchase department yet.</p>
+              </div>
+              <Button onClick={handleSubmitDraft} disabled={actionLoading} className="bg-orange-600 hover:bg-orange-700">
+                {actionLoading ? <Loader2 className="animate-spin" /> : <><Send className="mr-2 h-4 w-4" /> Submit Request</>}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {isDepartmentUser && request.status === 'CLARIFICATION_REQUESTED' && (
+          <Card className="bg-red-50 border-red-200">
+            <CardHeader className="py-4">
+              <CardTitle className="text-red-800 text-lg">Purchase Department Requires Clarification</CardTitle>
+              <CardDescription className="text-red-700">Please respond to the notes below to continue the process.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="bg-white p-3 rounded text-sm text-red-900 border border-red-100">
+                <span className="font-semibold">Procurement Notes:</span> {request.procurementNotes || 'No specific notes provided.'}
+              </div>
+              <div className="space-y-2">
+                <Label className="text-red-900">Your Response</Label>
+                <Textarea 
+                  placeholder="Provide the requested details here..." 
+                  value={clarificationResponse} 
+                  onChange={(e) => setClarificationResponse(e.target.value)} 
+                />
+              </div>
+              <Button onClick={handleSubmitClarification} disabled={actionLoading} className="bg-red-600 hover:bg-red-700">
+                {actionLoading ? <Loader2 className="animate-spin" /> : 'Submit Clarification'}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Main Info */}

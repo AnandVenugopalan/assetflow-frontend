@@ -30,6 +30,11 @@ export const ProcurementApi = {
     return res.data;
   },
 
+  submitDraft: async (id: string) => {
+    const res = await api.patch(`/procurement/requests/${id}/submit-draft`);
+    return res.data;
+  },
+
   // Step 2: Procurement Manager Review
   review: async (id: string, data: ProcurementReviewSchema) => {
     const res = await api.patch(`/procurement/requests/${id}/review`, data);

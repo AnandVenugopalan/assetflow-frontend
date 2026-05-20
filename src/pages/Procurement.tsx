@@ -11,9 +11,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Defined columns matching enum plus a combined 'COMPLETED' state
 const KANBAN_COLUMNS = [
+  { id: 'DRAFT', title: 'Draft', color: 'bg-gray-100' },
   { id: 'SUBMITTED', title: 'Submitted', color: 'bg-blue-100' },
   { id: 'UNDER_REVIEW', title: 'In Review', color: 'bg-yellow-100' },
+  { id: 'CLARIFICATION_REQUESTED', title: 'Need Info', color: 'bg-red-100' },
   { id: 'PENDING_FINANCE_APPROVAL', title: 'Finance Approval', color: 'bg-orange-100' },
+  { id: 'FINANCE_APPROVED', title: 'Finance Approved', color: 'bg-emerald-100' },
   { id: 'PO_GENERATED', title: 'PO Generated', color: 'bg-indigo-100' },
   { id: 'ORDERED', title: 'Ordered', color: 'bg-purple-100' },
   { id: 'DELIVERED', title: 'Completed', color: 'bg-green-100' }
