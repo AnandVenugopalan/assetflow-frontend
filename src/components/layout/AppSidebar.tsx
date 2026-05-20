@@ -20,13 +20,15 @@ import { toast } from "sonner";
 
 // RBAC access matrix
 const ACCESS_MATRIX = {
-  "Dashboard": ["ADMIN", "MANAGER", "USER"],
-  "BI Dashboard": ["ADMIN", "MANAGER"],
-  "Asset Register": ["ADMIN", "MANAGER", "USER"],
+  "Dashboard": ["ADMIN", "MANAGER", "USER", "DEPARTMENT_USER", "PURCHASE_HEAD", "FINANCE_MANAGER"],
+  "BI Dashboard": ["ADMIN", "MANAGER", "FINANCE_MANAGER"],
+  "Asset Register": ["ADMIN", "MANAGER", "USER", "DEPARTMENT_USER"],
   "Scan QR Code": ["ADMIN", "MANAGER", "USER"],
   "Generate QR Codes": ["ADMIN"],
   "Verify Assets": ["ADMIN", "MANAGER"],
-  "Procurement": ["ADMIN", "MANAGER"],
+  "Procurement": ["ADMIN", "MANAGER", "DEPARTMENT_USER", "PURCHASE_HEAD", "FINANCE_MANAGER"],
+  "Vendors": ["ADMIN", "MANAGER", "PURCHASE_HEAD"],
+  "Purchase Orders": ["ADMIN", "MANAGER", "PURCHASE_HEAD", "FINANCE_MANAGER"],
   // "Commissioning": ["ADMIN"],
   "Allocation": ["ADMIN", "MANAGER"],
   // "Operation": ["ADMIN", "MANAGER"],
@@ -51,6 +53,8 @@ const navigation = [
   { title: "Verify Assets", url: "/assets/verify", icon: CheckSquare },
   { title: "My Assets", url: "/my-assets", icon: Package },
   { title: "Procurement", url: "/procurement", icon: ShoppingCart },
+  { title: "Vendors", url: "/vendors", icon: Building2 },
+  { title: "Purchase Orders", url: "/purchase-orders", icon: FileText },
   // { title: "Commissioning", url: "/commissioning", icon: CheckSquare },
   { title: "Allocation", url: "/allocation", icon: Users },
   // { title: "Operation", url: "/operation", icon: PlaySquare },
