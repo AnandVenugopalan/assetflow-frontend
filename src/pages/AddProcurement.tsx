@@ -1,459 +1,301 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ArrowLeft, Save, Upload } from "lucide-react";
-import { toast } from "sonner";
-import { employees } from "@/lib/mockData";
-import api from "../lib/api";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { ProcurementApi } from "@/lib/api/procurement";
+import { Loader2, Save, CheckCircle } from "lucide-react";
+import { z } from "zod";
+import { createProcurementSchema, CreateProcurementSchema } from "@/lib/validations/procurement";
 
-const CATEGORY_ASSET_TYPE_MAP = {
-  "it-assets": [
-    "Laptop",
-    "Desktop",
-    "Server",
-    "Printer",
-    "Scanner",
-    "Router",
-    "Network Switch",
-    "Firewall",
-    "Monitor",
-    "Keyboard",
-    "Mouse",
-    "Storage Device",
-  ],
-  "movable-assets": [
-    "Office Furniture",
-    "Appliances",
-    "Transport Equipment",
-    "Tools & Machinery",
-    "Audio Visual Equipment",
-  ],
-  "immovable-assets": [
-    "Land",
-    "Building",
-    "Office Space",
-    "Warehouse",
-    "Parking Area",
-    "Electrical Installations",
-    "Plumbing Systems",
-    "CCTV System",
-    "Fire Safety System",
-    "Solar Panels",
-  ],
-} as const;
-
-type CategoryKey = keyof typeof CATEGORY_ASSET_TYPE_MAP;
-
-export default function AddProcurement() {
+const AddProcurement = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  const [formData, setFormData] = useState<CreateProcurementSchema>({
+    requestTitle: "",
+    itemName: "",
+    category: "",
+    assetType: "",
+    department: "",
+    quantity: 1,
+    requiredDate: "",
+    priority: "MEDIUM",
+    justification: "",
+    technicalSpecs: "",
+    status: "DRAFT",
+  });
 
-  // Form state variables
-  const [title, setTitle] = useState("");
-  const [category, setCategory] = useState<CategoryKey | "">("");
-  const [assetType, setAssetType] = useState("");
-  const [priority, setPriority] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [department, setDepartment] = useState("");
-  const [description, setDescription] = useState("");
-  const [justification, setJustification] = useState("");
-  const [estimatedCost, setEstimatedCost] = useState("");
-  const [budgetCode, setBudgetCode] = useState("");
-  const [preferredVendor, setPreferredVendor] = useState("");
-  const [alternateVendor, setAlternateVendor] = useState("");
-  const [requiredBy, setRequiredBy] = useState("");
-  const [requestedBy, setRequestedBy] = useState("");
-  const [managerApprover, setManagerApprover] = useState("");
-  const [additionalNotes, setAdditionalNotes] = useState("");
-
-  const assetTypeOptions = category ? CATEGORY_ASSET_TYPE_MAP[category] : [];
-
-  const handleCategoryChange = (value: string) => {
-    setCategory(value as CategoryKey);
-    setAssetType("");
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: "" }));
+    }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!category || !assetType) {
-      toast.error("Please select both Category and Asset Type");
-      return;
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: "" }));
     }
+  };
 
-    setIsSubmitting(true);
-
+  const validateForm = () => {
     try {
-      const payload = {
-        itemName: title,
-        category,
-        assetType,
-        quantity: Number(quantity),
-        estimatedCost: Number(estimatedCost),
-        vendor: preferredVendor,
-        requestedBy,
-        status: "PENDING",
-        priority,
-        justification,
-      };
+      createProcurementSchema.parse(formData);
+      setErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const newErrors: Record<string, string> = {};
+        error.errors.forEach(err => {
+          if (err.path[0]) {
+            newErrors[err.path[0].toString()] = err.message;
+          }
+        });
+        setErrors(newErrors);
+        
+        toast({
+          variant: "destructive",
+          title: "Validation Error",
+          description: "Please check the form for errors.",
+        });
+      }
+      return false;
+    }
+  };
 
-      const res = await api.post("/procurement/requests", payload);
-
-      toast.success("Purchase request submitted successfully!");
+  const handleSubmit = async (action: 'DRAFT' | 'SUBMITTED') => {
+    if (!validateForm()) return;
+    
+    setIsSubmitting(true);
+    try {
+      await ProcurementApi.create({ ...formData, status: action });
+      
+      toast({
+        title: action === 'DRAFT' ? "Draft Saved" : "Request Submitted",
+        description: `Your procurement request has been ${action === 'DRAFT' ? 'saved as draft' : 'submitted successfully'}.`,
+      });
+      
       navigate("/procurement");
-
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.response?.data?.message || "Error submitting procurement request");
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error?.response?.data?.message || "Something went wrong.",
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/procurement")}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold">New Purchase Request</h1>
-          <p className="text-muted-foreground mt-1">Submit a new procurement request</p>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit}>
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Request Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Request Title *</Label>
-                  <Input 
-                    id="title" 
-                    placeholder="e.g., 10 Dell Laptops for Engineering Team" 
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    required 
-                  />
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="category">Category *</Label>
-                      <Select value={category} onValueChange={handleCategoryChange} required>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="it-assets">IT Assets</SelectItem>
-                          <SelectItem value="movable-assets">Movable Assets</SelectItem>
-                          <SelectItem value="immovable-assets">Immovable Assets</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="assetType">Asset Type *</Label>
-                      <Select
-                        value={assetType}
-                        onValueChange={setAssetType}
-                        disabled={!category}
-                        required
-                      >
-                        <SelectTrigger>
-                          <SelectValue
-                            placeholder={category ? "Select asset type" : "Select category first"}
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {assetTypeOptions.map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="priority">Priority *</Label>
-                    <Select value={priority} onValueChange={setPriority} required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select priority" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="urgent">Urgent</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="quantity">Quantity *</Label>
-                    <Input 
-                      id="quantity" 
-                      type="number" 
-                      placeholder="10" 
-                      value={quantity}
-                      onChange={(e) => setQuantity(e.target.value)}
-                      required 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="department">Department *</Label>
-                    <Select value={department} onValueChange={setDepartment} required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select department" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="engineering">Engineering</SelectItem>
-                        <SelectItem value="design">Design</SelectItem>
-                        <SelectItem value="sales">Sales</SelectItem>
-                        <SelectItem value="marketing">Marketing</SelectItem>
-                        <SelectItem value="hr">Human Resources</SelectItem>
-                        <SelectItem value="finance">Finance</SelectItem>
-                        <SelectItem value="it">IT</SelectItem>
-                        <SelectItem value="operations">Operations</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description & Specifications *</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Detailed description of the items needed, specifications, and any special requirements..."
-                    rows={4}
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="justification">Business Justification *</Label>
-                  <Textarea
-                    id="justification"
-                    placeholder="Explain why this purchase is necessary and how it will benefit the organization..."
-                    rows={3}
-                    value={justification}
-                    onChange={(e) => setJustification(e.target.value)}
-                    required
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Budget & Vendor Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="estimatedCost">Estimated Cost (₹) *</Label>
-                    <Input 
-                      id="estimatedCost" 
-                      type="number" 
-                      placeholder="750000" 
-                      value={estimatedCost}
-                      onChange={(e) => setEstimatedCost(e.target.value)}
-                      required 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="budgetCode">Budget Code</Label>
-                    <Input 
-                      id="budgetCode" 
-                      placeholder="DEPT-2024-IT-001" 
-                      value={budgetCode}
-                      onChange={(e) => setBudgetCode(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="preferredVendor">Preferred Vendor</Label>
-                    <Input 
-                      id="preferredVendor" 
-                      placeholder="Dell India" 
-                      value={preferredVendor}
-                      onChange={(e) => setPreferredVendor(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="alternateVendor">Alternate Vendor</Label>
-                    <Input 
-                      id="alternateVendor" 
-                      placeholder="HP India" 
-                      value={alternateVendor}
-                      onChange={(e) => setAlternateVendor(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="requiredBy">Required By Date *</Label>
-                    <Input 
-                      id="requiredBy" 
-                      type="date" 
-                      value={requiredBy}
-                      onChange={(e) => setRequiredBy(e.target.value)}
-                      required 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="requestedBy">Requested By *</Label>
-                    <Select value={requestedBy} onValueChange={setRequestedBy} required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select requester" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {employees.map((employee) => (
-                          <SelectItem key={employee} value={employee.toLowerCase()}>
-                            {employee}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Approval Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="managerApprover">Manager Approval Required</Label>
-                  <Select value={managerApprover} onValueChange={setManagerApprover}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select manager" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {employees.slice(0, 5).map((employee) => (
-                        <SelectItem key={employee} value={employee.toLowerCase()}>
-                          {employee}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="additionalNotes">Additional Notes</Label>
-                  <Textarea
-                    id="additionalNotes"
-                    placeholder="Any additional information or special instructions..."
-                    rows={3}
-                    value={additionalNotes}
-                    onChange={(e) => setAdditionalNotes(e.target.value)}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+    <AppLayout>
+      <div className="flex-1 space-y-6 p-8 pt-6">
+        <div className="flex items-center justify-between space-y-2">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">New Procurement Request</h2>
+            <p className="text-muted-foreground">
+              Step 1: Department Request Information
+            </p>
           </div>
+        </div>
 
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Supporting Documents</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Quotation/Proposal</Label>
-                  <div className="flex items-center justify-center w-full">
-                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-smooth">
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
-                        <p className="text-xs text-muted-foreground text-center">
-                          Upload vendor quotations
-                        </p>
-                      </div>
-                      <input type="file" className="hidden" accept=".pdf,.jpg,.png" multiple />
-                    </label>
-                  </div>
-                </div>
+        <Card className="max-w-4xl">
+          <CardHeader className="border-b bg-muted/20">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">1</div>
+              <CardTitle>Request Details</CardTitle>
+            </div>
+            <CardDescription>Fill in the required information for the procurement request.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6 pt-6">
+            
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="space-y-2 col-span-2">
+                <Label htmlFor="requestTitle">Request Title <span className="text-red-500">*</span></Label>
+                <Input
+                  id="requestTitle"
+                  name="requestTitle"
+                  placeholder="e.g., Replacement Laptops for Q3"
+                  value={formData.requestTitle}
+                  onChange={handleChange}
+                  className={errors.requestTitle ? "border-red-500" : ""}
+                />
+                {errors.requestTitle && <p className="text-sm text-red-500">{errors.requestTitle}</p>}
+              </div>
 
-                <div className="space-y-2">
-                  <Label>Additional Documents</Label>
-                  <div className="flex items-center justify-center w-full">
-                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-smooth">
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
-                        <p className="text-xs text-muted-foreground text-center">
-                          Upload supporting docs
-                        </p>
-                      </div>
-                      <input type="file" className="hidden" accept=".pdf,.jpg,.png" multiple />
-                    </label>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              <div className="space-y-2">
+                <Label htmlFor="category">Category <span className="text-red-500">*</span></Label>
+                <Select value={formData.category} onValueChange={(val) => handleSelectChange('category', val)}>
+                  <SelectTrigger className={errors.category ? "border-red-500" : ""}>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="it-assets">IT Assets</SelectItem>
+                    <SelectItem value="office-equipment">Office Equipment</SelectItem>
+                    <SelectItem value="furniture">Furniture</SelectItem>
+                    <SelectItem value="software">Software</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.category && <p className="text-sm text-red-500">{errors.category}</p>}
+              </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Request Summary</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div className="flex justify-between py-2 border-b">
-                  <span className="text-muted-foreground">Status</span>
-                  <span className="font-medium">Draft</span>
-                </div>
-                <div className="flex justify-between py-2 border-b">
-                  <span className="text-muted-foreground">Approval Workflow</span>
-                  <span className="font-medium">Manager → Finance</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground">Estimated Timeline</span>
-                  <span className="font-medium">2-3 weeks</span>
-                </div>
-              </CardContent>
-            </Card>
+              <div className="space-y-2">
+                <Label htmlFor="assetType">Asset Type <span className="text-red-500">*</span></Label>
+                <Input
+                  id="assetType"
+                  name="assetType"
+                  placeholder="e.g., Laptop, Printer, Chair"
+                  value={formData.assetType}
+                  onChange={handleChange}
+                  className={errors.assetType ? "border-red-500" : ""}
+                />
+                {errors.assetType && <p className="text-sm text-red-500">{errors.assetType}</p>}
+              </div>
 
-            <div className="space-y-3">
-              <Button type="submit" className="w-full gradient-primary" disabled={isSubmitting}>
-                <Save className="mr-2 h-4 w-4" />
-                {isSubmitting ? "Submitting..." : "Submit Request"}
-              </Button>
+              <div className="space-y-2">
+                <Label htmlFor="itemName">Specific Item Name / Model <span className="text-red-500">*</span></Label>
+                <Input
+                  id="itemName"
+                  name="itemName"
+                  placeholder="e.g., Dell ThinkPad XPS"
+                  value={formData.itemName}
+                  onChange={handleChange}
+                  className={errors.itemName ? "border-red-500" : ""}
+                />
+                {errors.itemName && <p className="text-sm text-red-500">{errors.itemName}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="department">Department <span className="text-red-500">*</span></Label>
+                <Select value={formData.department} onValueChange={(val) => handleSelectChange('department', val)}>
+                  <SelectTrigger className={errors.department ? "border-red-500" : ""}>
+                    <SelectValue placeholder="Select department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="engineering">Engineering</SelectItem>
+                    <SelectItem value="hr">Human Resources</SelectItem>
+                    <SelectItem value="sales">Sales</SelectItem>
+                    <SelectItem value="finance">Finance</SelectItem>
+                    <SelectItem value="operations">Operations</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.department && <p className="text-sm text-red-500">{errors.department}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="quantity">Quantity <span className="text-red-500">*</span></Label>
+                <Input
+                  id="quantity"
+                  name="quantity"
+                  type="number"
+                  min="1"
+                  value={formData.quantity}
+                  onChange={handleChange}
+                  className={errors.quantity ? "border-red-500" : ""}
+                />
+                {errors.quantity && <p className="text-sm text-red-500">{errors.quantity}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="requiredDate">Required Date <span className="text-red-500">*</span></Label>
+                <Input
+                  id="requiredDate"
+                  name="requiredDate"
+                  type="date"
+                  value={formData.requiredDate}
+                  onChange={handleChange}
+                  className={errors.requiredDate ? "border-red-500" : ""}
+                />
+                {errors.requiredDate && <p className="text-sm text-red-500">{errors.requiredDate}</p>}
+              </div>
+
+              <div className="space-y-2 col-span-2">
+                <Label htmlFor="priority">Priority Level <span className="text-red-500">*</span></Label>
+                <Select value={formData.priority} onValueChange={(val) => handleSelectChange('priority', val)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="LOW">Low - Routine purchase</SelectItem>
+                    <SelectItem value="MEDIUM">Medium - Standard requirement</SelectItem>
+                    <SelectItem value="HIGH">High - Business impacting</SelectItem>
+                    <SelectItem value="URGENT">Urgent - Business critical</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2 col-span-2">
+                <Label htmlFor="justification">Business Justification <span className="text-red-500">*</span></Label>
+                <Textarea
+                  id="justification"
+                  name="justification"
+                  placeholder="Explain why this procurement is needed..."
+                  className={`min-h-[100px] ${errors.justification ? "border-red-500" : ""}`}
+                  value={formData.justification}
+                  onChange={handleChange}
+                />
+                {errors.justification && <p className="text-sm text-red-500">{errors.justification}</p>}
+              </div>
+
+              <div className="space-y-2 col-span-2">
+                <Label htmlFor="technicalSpecs">Technical Specifications (Optional)</Label>
+                <Textarea
+                  id="technicalSpecs"
+                  name="technicalSpecs"
+                  placeholder="Enter any specific technical requirements..."
+                  className="min-h-[100px]"
+                  value={formData.technicalSpecs}
+                  onChange={handleChange}
+                />
+              </div>
+
+            </div>
+          </CardContent>
+          <div className="flex items-center justify-between border-t p-6 bg-muted/10">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate("/procurement")}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <div className="flex gap-4">
               <Button
                 type="button"
-                variant="outline"
-                className="w-full"
-                onClick={() => navigate("/procurement")}
+                variant="secondary"
+                onClick={() => handleSubmit('DRAFT')}
+                disabled={isSubmitting}
+                className="gap-2"
               >
-                Cancel
+                <Save className="h-4 w-4" />
+                Save Draft
+              </Button>
+              <Button
+                type="submit"
+                onClick={() => handleSubmit('SUBMITTED')}
+                disabled={isSubmitting}
+                className="gap-2"
+              >
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+                Submit Request
               </Button>
             </div>
           </div>
-        </div>
-      </form>
-    </div>
+        </Card>
+      </div>
+    </AppLayout>
   );
-}
+};
+
+export default AddProcurement;

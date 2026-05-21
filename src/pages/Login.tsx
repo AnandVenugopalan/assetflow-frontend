@@ -401,13 +401,38 @@ export default function Login() {
                 <button 
                   type="button"
                   onClick={() => { setLoginEmail('user@assetflow.com'); setLoginPassword('user123'); }}
-                  className="bg-background/80 hover:bg-background p-3 rounded-lg border border-border hover:border-primary/50 hover:shadow-sm transition-all text-left flex flex-col group sm:col-span-2 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="bg-background/80 hover:bg-background p-3 rounded-lg border border-border hover:border-primary/50 hover:shadow-sm transition-all text-left flex flex-col group focus:outline-none focus:ring-2 focus:ring-primary/20"
                 >
-                  <span className="font-semibold text-foreground group-hover:text-primary transition-colors">Staff / Regular User</span>
-                  <div className="flex flex-col sm:flex-row sm:gap-4 mt-1">
-                    <span className="text-muted-foreground text-xs font-mono">user@assetflow.com</span>
-                    <span className="text-muted-foreground text-xs font-mono">user123</span>
-                  </div>
+                  <span className="font-semibold text-foreground group-hover:text-primary transition-colors">Staff / Regular</span>
+                  <span className="text-muted-foreground text-xs font-mono mt-1">user@assetflow.com</span>
+                  <span className="text-muted-foreground text-xs font-mono">user123</span>
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => { setLoginEmail('dept@assetflow.com'); setLoginPassword('dept123'); }}
+                  className="bg-background/80 hover:bg-background p-3 rounded-lg border border-border hover:border-primary/50 hover:shadow-sm transition-all text-left flex flex-col group focus:outline-none focus:ring-2 focus:ring-primary/20"
+                >
+                  <span className="font-semibold text-foreground group-hover:text-primary transition-colors">Dept User</span>
+                  <span className="text-muted-foreground text-xs font-mono mt-1">dept@assetflow.com</span>
+                  <span className="text-muted-foreground text-xs font-mono">dept123</span>
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => { setLoginEmail('purchase@assetflow.com'); setLoginPassword('purchase123'); }}
+                  className="bg-background/80 hover:bg-background p-3 rounded-lg border border-border hover:border-primary/50 hover:shadow-sm transition-all text-left flex flex-col group focus:outline-none focus:ring-2 focus:ring-primary/20"
+                >
+                  <span className="font-semibold text-foreground group-hover:text-primary transition-colors">Purchase Head</span>
+                  <span className="text-muted-foreground text-xs font-mono mt-1">purchase@assetflow.com</span>
+                  <span className="text-muted-foreground text-xs font-mono">purchase123</span>
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => { setLoginEmail('finance@assetflow.com'); setLoginPassword('finance123'); }}
+                  className="bg-background/80 hover:bg-background p-3 rounded-lg border border-border hover:border-primary/50 hover:shadow-sm transition-all text-left flex flex-col group focus:outline-none focus:ring-2 focus:ring-primary/20"
+                >
+                  <span className="font-semibold text-foreground group-hover:text-primary transition-colors">Finance Manager</span>
+                  <span className="text-muted-foreground text-xs font-mono mt-1">finance@assetflow.com</span>
+                  <span className="text-muted-foreground text-xs font-mono">finance123</span>
                 </button>
               </div>
             </div>

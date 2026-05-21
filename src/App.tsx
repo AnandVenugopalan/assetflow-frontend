@@ -36,6 +36,9 @@ import NewAllocation from "./pages/NewAllocation";
 import TransferAsset from "./pages/TransferAsset";
 import AddProcurement from "./pages/AddProcurement";
 import ViewProcurementRequest from "./pages/ViewProcurementRequest";
+import Vendors from "./pages/Vendors";
+import PurchaseOrders from "./pages/PurchaseOrders";
+import ViewPurchaseOrder from "./pages/ViewPurchaseOrder";
 import MyAssets from "./pages/MyAssets";
 import ScanQR from "./pages/ScanQR";
 import AdminGenerateQR from "./pages/AdminGenerateQR";
@@ -69,6 +72,9 @@ const App = () => (
               <Route path="/procurement" element={<ProtectedRoute><AppLayout><Procurement /></AppLayout></ProtectedRoute>} />
               <Route path="/procurement/add" element={<ProtectedRoute><AppLayout><AddProcurement /></AppLayout></ProtectedRoute>} />
               <Route path="/procurement/requests/:id" element={<ProtectedRoute><AppLayout><ViewProcurementRequest /></AppLayout></ProtectedRoute>} />
+              <Route path="/vendors" element={<ProtectedRoute><AppLayout><Vendors /></AppLayout></ProtectedRoute>} />
+              <Route path="/purchase-orders" element={<ProtectedRoute><AppLayout><PurchaseOrders /></AppLayout></ProtectedRoute>} />
+              <Route path="/purchase-orders/:id" element={<ProtectedRoute><AppLayout><ViewPurchaseOrder /></AppLayout></ProtectedRoute>} />
               <Route path="/maintenance" element={<ProtectedRoute><AppLayout><Maintenance /></AppLayout></ProtectedRoute>} />
               <Route path="/maintenance/new" element={<ProtectedRoute><AppLayout><NewMaintenance /></AppLayout></ProtectedRoute>} />
               <Route path="/allocation" element={<ProtectedRoute><AppLayout><Allocation /></AppLayout></ProtectedRoute>} />
